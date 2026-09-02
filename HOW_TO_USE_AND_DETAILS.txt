@@ -1,0 +1,103 @@
+================================================================================
+          ULTIMATE EXTREME DEBLOAT & SYSTEM LATENCY OPTIMIZER
+             Created by: blayk11 | https://github.com/blayk11
+================================================================================
+
+This project is engineered to transform Windows 10 and Windows 11 (including
+Insider Preview builds) into an ultra-fast, responsive, and stripped-down operating
+system, significantly outperforming conventional debloated systems on any hardware.
+
+Compatibility: Windows 10 / Windows 11 (Home, Pro, Enterprise, LTSC & Insider)
+
+--------------------------------------------------------------------------------
+ 1. QUICK START & EXECUTION METHODS
+--------------------------------------------------------------------------------
+
+METHOD 1 (Instant One-Liner - Fastest):
+1. Open PowerShell as Administrator.
+2. Paste and run:
+
+   irm https://raw.githubusercontent.com/blayk11/ultimatedebloat/main/ExtremeDebloat.ps1 | iex
+
+METHOD 2 (Local File Execution):
+1. Open the folder where you placed "ExtremeDebloat.ps1".
+2. Right-click "ExtremeDebloat.ps1" and select "Run with PowerShell".
+   (The script will automatically request Administrator privileges if needed).
+
+METHOD 3 (Terminal in Directory):
+1. Open PowerShell or Terminal in the script directory.
+2. Execute the command:
+
+   Set-ExecutionPolicy Unrestricted -Scope Process -Force; .\ExtremeDebloat.ps1
+
+--------------------------------------------------------------------------------
+ 2. HOW TO NAVIGATE AND SELECT ITEMS (INTERACTIVE TUI)
+--------------------------------------------------------------------------------
+Inside any category menu ([2], [3], [4], [5], [7]):
+
+- [▲ / ▼] Up / Down Arrow Keys : Navigate items one-by-one with live cursor highlight.
+- [Page Up / Page Down]        : Jump blocks of items for rapid browsing.
+- [Home / End]                 : Jump immediately to the first or last item.
+- [Spacebar]                   : Toggle selection on the highlighted item ([X] / [ ]).
+- [Key A]                      : Select ALL items in the current list at once.
+- [Key N]                      : Deselect ALL items in the current list at once.
+- [Key I]                      : Invert current selection.
+- [Enter]                      : Confirm and execute tweaks for checked items [X].
+- [ESC / Q]                    : Cancel and return to the Main Menu without changes.
+
+- In the Main Menu:
+  * Type "A" to apply all recommended defaults automatically (Turbo Mode).
+  * Type "R" to reboot the computer after optimization.
+  * Type "Q" to exit.
+
+--------------------------------------------------------------------------------
+ 3. TECHNICAL MODULE BREAKDOWN
+--------------------------------------------------------------------------------
+
+[1] System Restore Point:
+    - What it does: Creates a system snapshot (System Restore) before changes.
+    - How it works: Uses 'Checkpoint-Computer' with custom safety flags.
+
+[2] UWP Bloatware & App Purge:
+    - What it does: Selectively or batch-removes promotional apps, sponsored games,
+      and non-essential provisioned packages (TikTok, Disney+, Bing suite, News,
+      Feedback Hub, Copilot, Xbox Overlays, Clipchamp, Solitaire, etc.).
+    - How it works: Runs 'Remove-AppxPackage' and 'Remove-AppxProvisionedPackage'
+      for current user profile and the offline Windows system image.
+
+[3] Telemetry, AI & Ad Stripping:
+    - What it does: Strips Bing Search from Start Menu, turns off Windows Copilot,
+      Recall Snapshot AI, File Explorer ads, and diagnostic telemetry tracking.
+    - How it works: Configures Group Policy (GPO) and registry keys in HKLM/HKCU.
+
+[4] Background Services Optimization:
+    - What it does: Disables heavy background services causing high CPU overhead
+      and disk thrashing (SysMain/Superfetch on SSDs, DiagTrack, WAP Push, Maps,
+      Fax, Error Reporting, Retail Demo, etc.).
+    - How it works: Stops running services and sets StartupType to 'Disabled'.
+
+[5] Universal Latency & Hardware Scheduling (CPU / RAM / GPU):
+    - What it does: Drastically reduces input lag, eliminates micro-stutters,
+      and boosts framerate consistency in games and demanding applications.
+    - How it works:
+      * Win32PrioritySeparation = 38 (Max CPU priority quantum for foreground apps).
+      * Disables GameDVR background screen capture.
+      * SystemResponsiveness = 0 & NetworkThrottlingIndex disabled.
+      * High GPU priority (Priority: 8) in Multimedia Class Scheduler.
+      * MenuShowDelay = 0 (Instant explorer and context menu rendering).
+      * Unlocks and activates the hidden "Ultimate Performance" power plan.
+
+[6] VBS & Core Isolation Toggle (Virtualization-Based Security):
+    - What it does: Disables hypervisor enforcement on the OS kernel, restoring
+      direct hardware access and raw memory throughput.
+    - How it works: Sets 'bcdedit /set hypervisorlaunchtype off' and registry flags.
+
+[7] Deep Disk & Cache Cleaner:
+    - What it does: Purgation of system temp files, user temp caches, Windows
+      Update download cache, Prefetch, and Recycle Bin.
+    - How it works: Recursively cleans cache directories and calls Clear-RecycleBin.
+
+--------------------------------------------------------------------------------
+ Credits: Engineered by blayk11 (https://github.com/blayk11)
+ License: MIT License
+================================================================================
