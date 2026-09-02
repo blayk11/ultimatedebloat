@@ -14,10 +14,14 @@ try {
     [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 } catch {}
 
-# Auto-elevação de Administrador
+# Auto-elevação de Administrador (compatível com execução local e via irm/iex)
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning "Elevando permissoes para Administrador..."
-    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    if ($PSCommandPath) {
+        Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    } else {
+        Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -Command `"irm https://raw.githubusercontent.com/blayk11/ultimatedebloat/main/ExtremeDebloat.ps1 | iex`"" -Verb RunAs
+    }
     exit
 }
 

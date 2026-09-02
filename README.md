@@ -13,6 +13,18 @@
 
 ---
 
+## ⚡ Início Rápido (Execução Instantânea)
+
+Abra o **PowerShell** (como Administrador) e cole o comando abaixo:
+
+```powershell
+irm https://raw.githubusercontent.com/blayk11/ultimatedebloat/main/ExtremeDebloat.ps1 | iex
+```
+
+> **Nota**: Não é necessário clonar o repositório nem baixar arquivos manualmente. O comando carrega a ferramenta diretamente na memória do terminal com suporte completo à interface interativa.
+
+---
+
 ## 📌 Visão Geral
 
 O **Ultimate Extreme Debloat & System Latency Optimizer** é um utilitário avançado em PowerShell projetado para transformar sistemas Windows em ambientes de altíssima performance, com mínima latência de entrada (input lag), zero micro-stutters e total privacidade.
@@ -109,26 +121,23 @@ Purgamento seguro de arquivos temporários do sistema (`C:\Windows\Temp`), cache
 
 ---
 
-## 🚀 Como Executar
+## 🚀 Métodos Alternativos de Execução
 
-### Pré-requisitos
-* Windows 10 ou Windows 11 (qualquer edição: Home, Pro, Enterprise, LTSC ou Insider).
-* Executar como **Administrador**.
-
-### Método 1: Download Direto e Execução
-1. Baixe os arquivos do repositório ou clone o projeto:
+### Método Local (Download / Clone)
+1. Clone o repositório:
    ```powershell
-   git clone https://github.com/blayk11/UltimateDebloat.git
+   git clone https://github.com/blayk11/ultimatedebloat.git
    ```
-2. Abra a pasta do projeto.
-3. Clique com o botão direito em **`ExtremeDebloat.ps1`** e selecione **"Executar com o PowerShell"**.
-   *(O script solicitará elevação de Administrador automaticamente se necessário).*
+2. Acesse a pasta do projeto:
+   ```powershell
+   cd ultimatedebloat
+   ```
+3. Execute o script principal:
+   ```powershell
+   Set-ExecutionPolicy Unrestricted -Scope Process -Force; .\ExtremeDebloat.ps1
+   ```
 
-### Método 2: Via Terminal do PowerShell
-Abra o PowerShell como Administrador e execute:
-```powershell
-Set-ExecutionPolicy Unrestricted -Scope Process -Force; & ".\ExtremeDebloat.ps1"
-```
+*(Ou clique com o botão direito no `ExtremeDebloat.ps1` e selecione **"Executar com o PowerShell"**).*
 
 ---
 
