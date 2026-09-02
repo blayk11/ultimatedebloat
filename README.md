@@ -2,7 +2,7 @@
 
 # ⚡ Ultimate Extreme Debloat & System Latency Optimizer
 
-**Otimizador modular de baixa latência, expurgo de telemetria e remoção de bloatwares para Windows 10 e Windows 11.**
+**Modular low-latency optimizer, telemetry stripper, and bloatware remover for Windows 10 and Windows 11.**
 
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011%20%7C%20Insider-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/blayk11)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207+-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://github.com/blayk11)
@@ -13,142 +13,150 @@
 
 ---
 
-## ⚡ Início Rápido (Execução Instantânea)
+## ⚡ Quick Start (Instant One-Liner)
 
-Abra o **PowerShell** (como Administrador) e cole o comando abaixo:
+Open **PowerShell** (as Administrator) and paste the following command:
 
 ```powershell
 irm https://raw.githubusercontent.com/blayk11/ultimatedebloat/main/ExtremeDebloat.ps1 | iex
 ```
 
-> **Nota**: Não é necessário clonar o repositório nem baixar arquivos manualmente. O comando carrega a ferramenta diretamente na memória do terminal com suporte completo à interface interativa.
+> **Note**: No manual repository cloning or file downloading required. The command fetches and executes the utility directly in memory with full interactive TUI support.
 
 ---
 
-## 📌 Visão Geral
+## 📌 Overview
 
-O **Ultimate Extreme Debloat & System Latency Optimizer** é um utilitário avançado em PowerShell projetado para transformar sistemas Windows em ambientes de altíssima performance, com mínima latência de entrada (input lag), zero micro-stutters e total privacidade.
+**Ultimate Extreme Debloat & System Latency Optimizer** is an advanced PowerShell utility engineered to turn stock Windows installations into ultra-responsive, stripped-down, high-performance environments with minimal input lag, zero micro-stutters, and complete privacy.
 
-Diferente de scripts convencionais que executam comandos às cegas, esta ferramenta possui uma **Interface Interativa de Terminal (TUI)** desenvolvida do zero, permitindo que você visualize, navegue e selecione exatamente o que deseja modificar ou remover do seu sistema operacional.
-
----
-
-## ✨ Principais Destaques
-
-* 🎮 **TUI Interativa Fluida (Zero Flicker)**: Interface de terminal com motor de paginação dinâmica e reposicionamento de cursor em memória, garantindo navegação suave sem travamentos ou oscilações de tela.
-* 🛡️ **Segurança em Primeiro Lugar**: Criação integrada de Pontos de Restauração do Sistema (*System Restore Point*) antes de qualquer alteração profunda.
-* 🧩 **100% Modular**: Você escolhe exatamente o que aplicar item por item via teclado, ou executa o **Modo Turbo Completo**.
-* ⚡ **Kernel & Hardware Scheduling**: Ajustes refinados de quantum de CPU (`Win32PrioritySeparation`), prioridade de GPU e agendador multimídia para máximo FPS e estabilidade de frametime.
-* 🔇 **Expurgo de Telemetria e Bloatware**: Desativação profunda de rastreamento em segundo plano, anúncios do Explorer, Windows Copilot e desinstalação permanente de apps UWP desnecessários.
+Unlike traditional scripts that execute blind batch commands, this tool features a custom **Interactive Terminal User Interface (TUI)** built from the ground up, allowing you to preview, navigate, and selectively toggle exactly what you want to modify or remove.
 
 ---
 
-## 🖥️ Demonstração da Interface (TUI)
+## ✨ Highlights
+
+* 🎮 **Flicker-Free Interactive TUI**: Built with dynamic pagination and in-memory cursor repositioning (`Zero-Flicker` engine), providing smooth keyboard-driven navigation across any console size.
+* 🛡️ **Safety First**: Integrated automatic creation of **System Restore Points** before applying system-level registry or service changes.
+* 🧩 **100% Modular**: Customize individual components via interactive menus with checkboxes `[X]` / `[ ]`, or run the automated **Full Turbo Mode**.
+* ⚡ **Kernel & Hardware Scheduling**: Fine-tuned CPU quantum (`Win32PrioritySeparation`), GPU scheduling priorities, and multimedia system responsiveness for maximum gaming FPS and consistent frametimes.
+* 🔇 **Deep Telemetry & Bloatware Stripping**: Complete eradication of background diagnostic tracking, File Explorer ads, Windows Copilot, Recall snapshots, and pre-installed provisioned UWP apps.
+
+---
+
+## 🖥️ Terminal UI Preview
 
 ```text
 ==========================================================================
          ULTIMATE EXTREME DEBLOAT & SYSTEM LATENCY OPTIMIZER              
-             Criado por: blayk11 | https://github.com/blayk11             
+             Created by: blayk11 | https://github.com/blayk11             
 ==========================================================================
- [CATEGORIA]: REMOVER APLICATIVOS E BLOATWARES (UWP)
- Selecione com [ESPACO] os apps que deseja remover permanentemente.
+ [CATEGORY]: REMOVE BLOATWARES & APPS (UWP)
+ Select items with [SPACE] to permanently remove.
  ------------------------------------------------------------------------
- [Setas / PgUp / PgDn]: Navegar  |  [Espaco]: Marcar/Desmarcar [X]
- [A]: Marcar Todos   |   [N]: Desmarcar Todos   |   [I]: Inverter
- [Enter]: Confirmar e Executar  |  [ESC / Q]: Cancelar / Voltar
+ [Arrows / PgUp / PgDn]: Navigate  |  [Space]: Toggle [X]
+ [A]: Select All   |   [N]: Deselect All   |   [I]: Invert
+ [Enter]: Confirm & Execute  |  [ESC / Q]: Cancel / Back
  ========================================================================
-   ^ (... mais itens acima ...)
- > [X] Clima (Bing Weather)
-   [X] Noticias (Bing News)
-   [X] Financas (Bing Finance)
-   [X] Obter Ajuda (Get Help)
-   [ ] Alarmes e Relogio
+   ^ (... more items above ...)
+ > [X] Weather (Bing Weather)
+   [X] News (Bing News)
+   [X] Finance (Bing Finance)
+   [X] Get Help
+   [ ] Alarms & Clock
    [X] Clipchamp Video Editor
    [X] Microsoft Copilot App
-   v (... mais itens abaixo ...)
- [ Item 1 de 37 | Marcados: 32/37 ] --------------------------------------
+   v (... more items below ...)
+ [ Item 1 of 37 | Selected: 32/37 ] --------------------------------------
 ```
 
-### 🎮 Atalhos e Controles de Navegação
+### 🎮 Navigation & Keyboard Controls
 
-| Tecla / Atalho | Ação |
+| Key / Shortcut | Action |
 | :--- | :--- |
-| `▲ / ▼` (Setas) | Navega item por item com destaque em tempo real |
-| `Page Up / Page Down` | Salta blocos de itens para navegação veloz |
-| `Home / End` | Salta diretamente para o início ou final da lista |
-| `Barra de Espaço` | Marca ou desmarca o item em foco (`[X]` / `[ ]`) |
-| `A` | **Marca Todos** os itens da categoria |
-| `N` | **Desmarca Todos** os itens |
-| `I` | **Inverte a seleção** atual |
-| `Enter` | **Confirma e executa** as alterações nos itens marcados |
-| `ESC` ou `Q` | Cancela e retorna ao menu anterior sem alterar nada |
+| `▲ / ▼` (Arrow Keys) | Navigate items one-by-one with real-time cursor highlight |
+| `Page Up / Page Down` | Jump blocks of items for fast browsing |
+| `Home / End` | Jump directly to the top or bottom of the list |
+| `Spacebar` | Toggle checkbox on the active item (`[X]` / `[ ]`) |
+| `A` | **Select All** items in the current category |
+| `N` | **Deselect All** items |
+| `I` | **Invert** the current selection |
+| `Enter` | **Confirm and execute** modifications for selected items |
+| `ESC` or `Q` | Cancel and return to the main menu without changes |
 
 ---
 
-## 📦 Módulos do Sistema
+## 📦 System Modules
 
-### 1. 🛡️ Ponto de Restauração do Sistema
-Cria um snapshot do estado atual do Windows via PowerShell antes de aplicar modificações no registro ou serviços.
+### 1. 🛡️ System Restore Point
+Creates a safe system checkpoint (`Checkpoint-Computer`) to ensure rollback capability prior to modifying system registries or services.
 
-### 2. 🗑️ Remoção de Bloatwares & Apps UWP
-Desinstalação completa para o usuário atual e desprovisionamento da imagem do sistema de dezenas de apps promocionais (Bing Apps, Clipchamp, Copilot, Feedback Hub, Paciência, Jogos Patrocinados, Xbox Overlays desnecessários, etc.).
+### 2. 🗑️ UWP Bloatware & App Purge
+Completely uninstalls for the current user and deprovisions from the OS image all promotional bloatware (Bing Suite, Clipchamp, Copilot, Feedback Hub, Solitaire, sponsored games, TikTok, Disney+, unused Xbox overlays, etc.).
 
-### 3. 🔒 Telemetria, Copilot AI & Anúncios
-* Desativação de buscas web e Bing integrado no Menu Iniciar.
-* Desativação do Microsoft Copilot AI e Windows Recall (Snapshot AI).
-* Remoção de anúncios no Explorador de Arquivos e sugestões do Windows.
-* Desativação de relatórios de telemetria, diagnóstico de dados e histórico de atividades.
+### 3. 🔒 Telemetry, AI & Ad Stripping
+* Disables Bing Search & Web Integration in the Start Menu.
+* Disables Microsoft Copilot AI and Windows Recall snapshot analysis.
+* Eliminates File Explorer promotional suggestions and Lock Screen ads.
+* Disables diagnostic data collection, background telemetry, and user activity feeds.
 
-### 4. ⚙️ Otimização de Serviços em Segundo Plano
-Parada e desativação segura de serviços que causam alto consumo de CPU e constantes leituras de disco:
-* `SysMain` (Superfetch - evita leituras redundantes e picos de uso em SSD/NVMe)
-* `DiagTrack` & `dmwappushservice` (Telemetria e rastreamento de uso)
+### 4. ⚙️ Background Services Optimization
+Safely stops and disables heavy background services causing unnecessary CPU cycles and SSD disk thrashing:
+* `SysMain` (Superfetch - eliminates unnecessary I/O overhead on NVMe/SSD)
+* `DiagTrack` & `dmwappushservice` (Connected User Experiences & Telemetry)
 * `MapsBroker`, `Fax`, `RetailDemo`, `WpcMonSvc`, `WerSvc`, `PcaSvc`, etc.
 
-### 5. 🚀 Ajustes Universais de Latência e Scheduling (CPU / RAM / GPU)
-* **Win32PrioritySeparation = 38**: Configura ciclos curtos e variáveis com prioridade máxima de tempo de CPU para o aplicativo em foco/tela cheia.
-* **Desativação de GameDVR**: Elimina captura de tela oculta e mitiga micro-stutters em jogos.
-* **SystemResponsiveness = 0 & NetworkThrottling Off**: Desativa limites de prioridade de rede e multimídia.
-* **GPU Priority = 8 & Scheduling Category High**: Garante prioridade no agendador de tarefas multimídia do Windows.
-* **MenuShowDelay = 0**: Resposta imediata ao abrir pastas, menus e janelas.
-* **Plano Ultimate Performance**: Desbloqueia e ativa o esquema de energia de Desempenho Máximo do Windows.
+### 5. 🚀 Universal Latency & Hardware Scheduling (CPU / RAM / GPU)
+* **Win32PrioritySeparation = 38**: Short, variable quantum intervals giving maximum CPU thread priority to foreground apps and games.
+* **GameDVR & Background Capture Disabled**: Eliminates hidden background recording overhead and removes micro-stutters.
+* **SystemResponsiveness = 0 & NetworkThrottling Off**: Removes network throttle limits for low-latency network packet delivery.
+* **GPU Priority = 8 & Scheduling Category High**: Sets high GPU priority in Windows Multimedia Class Scheduler.
+* **MenuShowDelay = 0**: Instant UI/window response when navigating explorer folders and menus.
+* **Ultimate Performance Power Plan**: Unlocks and activates the hidden Windows Ultimate Performance power scheme.
 
-### 6. 🔓 Desativação de VBS / Isolamento de Núcleo
-Desativa o hipervisor e segurança baseada em virtualização (VBS), eliminando o overhead de virtualização sobre a CPU e memória RAM para máximo rendimento em benchmarks e jogos competitivos.
+### 6. 🔓 VBS / Core Isolation Toggle
+Disables Hypervisor-Enforced Code Integrity (HVCI) and Virtualization-Based Security (VBS) to eliminate CPU virtualization overhead and maximize raw clock speed access for competitive gaming and benchmarking.
 
-### 7. 🧹 Limpeza Profunda de Disco e Caches
-Purgamento seguro de arquivos temporários do sistema (`C:\Windows\Temp`), caches de usuário (`%TEMP%`), downloads pendentes do Windows Update, cache Prefetch e lixeira.
+### 7. 🧹 Deep Disk & Cache Cleaner
+Deep cleanup of system temporary files (`C:\Windows\Temp`), user temp files (`%TEMP%`), Windows Update download cache, Prefetch cache, and Recycle Bin.
 
 ---
 
-## 🚀 Métodos Alternativos de Execução
+## 🚀 Alternative Execution Methods
 
-### Método Local (Download / Clone)
-1. Clone o repositório:
+### Local Execution (Git Clone / Download)
+1. Clone the repository:
    ```powershell
    git clone https://github.com/blayk11/ultimatedebloat.git
    ```
-2. Acesse a pasta do projeto:
+2. Navigate to the project directory:
    ```powershell
    cd ultimatedebloat
    ```
-3. Execute o script principal:
+3. Run the script:
    ```powershell
    Set-ExecutionPolicy Unrestricted -Scope Process -Force; .\ExtremeDebloat.ps1
    ```
 
-*(Ou clique com o botão direito no `ExtremeDebloat.ps1` e selecione **"Executar com o PowerShell"**).*
+*(Or right-click **`ExtremeDebloat.ps1`** and choose **"Run with PowerShell"**).*
 
 ---
 
-## 👨‍💻 Autor
+## 💻 Compatibility
 
-Desenvolvido e mantido por **[blayk11](https://github.com/blayk11)**.
-
-Sinta-se à vontade para abrir uma *Issue* ou enviar um *Pull Request* com sugestões e melhorias!
+* **Operating Systems**: Windows 10 & Windows 11 (Home, Pro, Enterprise, LTSC, and Insider Preview builds).
+* **PowerShell**: Windows PowerShell 5.1 & PowerShell 7+ (Core).
+* **Permissions**: Administrator privileges required (auto-elevation included).
 
 ---
 
-## 📄 Licença
+## 👨‍💻 Author
 
-Este projeto está sob a licença [MIT](LICENSE). Sinta-se livre para utilizar, modificar e distribuir.
+Engineered and maintained by **[blayk11](https://github.com/blayk11)**.
+
+Feel free to open an **Issue** or submit a **Pull Request** with suggestions and enhancements!
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT](LICENSE) License. You are free to use, modify, and distribute it.
