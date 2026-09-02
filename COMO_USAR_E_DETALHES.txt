@@ -1,0 +1,93 @@
+================================================================================
+          ULTIMATE EXTREME DEBLOAT & SYSTEM LATENCY OPTIMIZER
+                       Criado por: blayk11
+================================================================================
+
+Este projeto foi desenvolvido para transformar o Windows 10 e Windows 11 (incluindo
+versões Insider Preview) em um sistema ultrarrápido, responsivo e limpo, superando a
+latência e velocidade de sistemas debloatados convencionais em qualquer configuração de hardware.
+
+Compatibilidade: Windows 10 / Windows 11 (Home, Pro, Enterprise, LTSC & Insider)
+
+--------------------------------------------------------------------------------
+ 1. COMO USAR E COMO RODAR (QUALQUER COMPUTADOR)
+--------------------------------------------------------------------------------
+
+MÉTODO 1 (O mais fácil e rápido):
+1. Abra a pasta onde você descompactou/colocou o script.
+2. Clique com o botão direito no arquivo "ExtremeDebloat.ps1".
+3. Selecione "Executar com o PowerShell".
+   (O script solicitará permissão de Administrador automaticamente).
+
+MÉTODO 2 (Abrindo o PowerShell na pasta):
+1. Abra a pasta onde está o arquivo "ExtremeDebloat.ps1".
+2. Segure Shift e clique com o botão direito em um espaço vazio da pasta.
+3. Escolha "Abrir no Terminal" ou "Abrir janela do PowerShell aqui".
+4. Execute o comando:
+
+   Set-ExecutionPolicy Unrestricted -Scope Process -Force; .\ExtremeDebloat.ps1
+
+--------------------------------------------------------------------------------
+ 2. COMO NAVEGAR E SELECIONAR OS ITENS (NOVA TUI INTERATIVA)
+--------------------------------------------------------------------------------
+Dentro de qualquer submenu de personalização ([2], [3], [4], [5], [7]):
+
+- [▲ / ▼] Setas Cima / Baixo : Navega pela lista de itens.
+- [Barra de Espaço]          : Marca ou Desmarca o item selecionado ([X] / [ ]).
+- [Tecla A]                  : Marca TODOS os itens da lista de uma vez só.
+- [Tecla N]                  : Desmarca TODOS os itens da lista de uma vez só.
+- [Enter]                    : Confirma e executa a limpeza/otimização dos itens marcados.
+- [ESC / Q]                  : Cancela e volta para o Menu Principal sem alterar nada.
+
+- No Menu Principal:
+  * Digite "A" para aplicar tudo automaticamente com os padrões recomendados.
+  * Digite "R" para reiniciar o computador após finalizar.
+
+--------------------------------------------------------------------------------
+ 3. O QUE O SCRIPT FAZ E COMO FAZ (DETALHAMENTO TÉCNICO)
+--------------------------------------------------------------------------------
+
+[1] Ponto de Restauração de Segurança:
+    - O que faz: Cria um ponto de restauração no Windows (System Restore) antes de alterar o sistema.
+    - Como faz: Utiliza 'Checkpoint-Computer' com descrição de segurança.
+
+[2] Expurgo de Bloatwares & Aplicativos UWP Inúteis:
+    - O que faz: Remove individualmente ou em lote aplicativos promocionais, jogos
+      patrocinados e apps embutidos (TikTok, Disney+, Notícias, Clima, Feedbacks,
+      Xbox/Cortana, Clipchamp, Solitaire, etc.).
+    - Como faz: Utiliza comandos 'Remove-AppxPackage' e 'Remove-AppxProvisionedPackage'
+      para desinstalar do usuário atual e desprovisionar da imagem do sistema operacional.
+
+[3] Desativação de Telemetria, Copilot AI e Anúncios:
+    - O que faz: Remove busca do Bing no Iniciar, desativa Copilot, Recall Snapshot,
+      anúncios nas pastas, rastreamento de diagnóstico e telemetria de uso.
+    - Como faz: Aplica políticas de grupo (GPO) e registros em HKLM/HKCU.
+
+[4] Otimização de Serviços em Segundo Plano:
+    - O que faz: Desativa serviços pesados que consomem CPU e geram overhead de disco
+      (SysMain/Superfetch, DiagTrack, WAP Push, Mapas, Fax, etc.).
+    - Como faz: Para o serviço ativo e altera o StartupType para 'Disabled'.
+
+[5] Ajustes Universais de Latência e Scheduling (CPU / RAM / GPU):
+    - O que faz: Reduz o input lag geral do sistema, diminui atrasos de renderização de
+      menus e previne micro-engasgos (stutters) em jogos e aplicações pesadas.
+    - Como faz:
+      * Win32PrioritySeparation = 38 (Prioridade máxima de fatias de tempo para o app em foco).
+      * Desativação de GameDVR e captura oculta em segundo plano.
+      * SystemResponsiveness = 0 & NetworkThrottlingIndex desativado.
+      * Prioridade alta de GPU (Priority: 8) no agendador multimídia do Windows.
+      * MenuShowDelay = 0 (Resposta instantânea da interface ao clicar/abrir janelas).
+      * Desbloqueio e ativação do Plano de Energia "Ultimate Performance" (Desempenho Máximo).
+
+[6] Desativação de VBS e Hipervisor (Virtualization-Based Security):
+    - O que faz: Desliga a camada de virtualização que isola o kernel do Windows 11,
+      liberando latência de clock e acesso direto da CPU à memória RAM.
+    - Como faz: Ajusta 'bcdedit /set hypervisorlaunchtype off' e DeviceGuard no registro.
+
+[7] Limpeza Profunda de Cache, Prefetch e Logs:
+    - O que faz: Purgamento selecionável de arquivos temporários, lixeira e caches.
+    - Como faz: Deleta recursivamente os diretórios temporários selecionados.
+
+--------------------------------------------------------------------------------
+ Créditos: Criado e otimizado por blayk11.
+================================================================================
