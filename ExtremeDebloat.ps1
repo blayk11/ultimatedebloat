@@ -775,33 +775,27 @@ function Menu-RestoreIndividualLatency {
 # 8. RESTORE & ROLLBACK CENTER (UNDO HUB)
 # ==============================================================================
 function Menu-RollbackCenter {
-    do {
-        try { [Console]::CursorVisible = $true } catch {}
-        Clear-Host
-        Write-Host "==========================================================================" -ForegroundColor Red
-        Write-Host "                   RESTORE & ROLLBACK COMMAND CENTER                      " -ForegroundColor Yellow
-        Write-Host "             Created by: blayk11 | https://github.com/blayk11             " -ForegroundColor Cyan
-        Write-Host "==========================================================================" -ForegroundColor Red
-        Write-Host " Select a granular category to restore specific items:" -ForegroundColor White
-        Write-Host ""
-        Write-Host "  [1] Reinstall / Restore Specific Apps (Select item-by-item)" -ForegroundColor Magenta
-        Write-Host "  [2] Restore Specific Background Services (Select item-by-item)" -ForegroundColor Yellow
-        Write-Host "  [3] Restore Specific Telemetry & Privacy Settings (Select item-by-item)" -ForegroundColor Yellow
-        Write-Host "  [4] Restore Specific Latency & Hardware Tweaks (Select item-by-item)" -ForegroundColor Green
-        Write-Host "  [5] Re-enable VBS / Core Isolation & Security Hypervisor" -ForegroundColor Blue
-        Write-Host "  [6] Reinstall / Re-register ALL Built-in Windows Store Apps" -ForegroundColor Cyan
-        Write-Host "  [7] Launch Windows System Restore Wizard (rstrui.exe)" -ForegroundColor White
-        Write-Host "  ------------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [Q] Return to Main Menu" -ForegroundColor DarkYellow
-        Write-Host ""
-        $rbChoice = (Read-Host "Enter your choice").Trim().ToUpper()
+    $hubCategories = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Id = "Apps"; Label = "Reinstall / Restore Specific Apps (Item-by-item selection)"; Selected = $false },
+        [PSCustomObject]@{ Id = "Services"; Label = "Restore Specific Background Services (Item-by-item selection)"; Selected = $false },
+        [PSCustomObject]@{ Id = "Privacy"; Label = "Restore Privacy, AI & Telemetry Settings (Item-by-item selection)"; Selected = $false },
+        [PSCustomObject]@{ Id = "Latency"; Label = "Restore Latency & Hardware Tweaks (Item-by-item selection)"; Selected = $false },
+        [PSCustomObject]@{ Id = "VBS"; Label = "Re-enable VBS / Core Isolation & Security Hypervisor"; Selected = $false },
+        [PSCustomObject]@{ Id = "AllStoreApps"; Label = "Batch Re-register ALL Factory Windows Store Apps"; Selected = $false },
+        [PSCustomObject]@{ Id = "SystemRestore"; Label = "Launch Windows System Restore Wizard (rstrui.exe)"; Selected = $false }
+    )
 
-        switch ($rbChoice) {
-            "1" { Menu-RestoreIndividualApps }
-            "2" { Menu-RestoreIndividualServices }
-            "3" { Menu-RestoreIndividualPrivacy }
-            "4" { Menu-RestoreIndividualLatency }
-            "5" {
+    $selected = Show-MultiSelectMenu -Title "RESTORE & ROLLBACK COMMAND CENTER" -Subtitle "Use [SPACE] to select the restoration categories or actions you want to run." -Items $hubCategories
+    if ($null -eq $selected) { return }
+
+    foreach ($item in $selected) {
+        if (-not $item.Selected) { continue }
+        switch ($item.Id) {
+            "Apps" { Menu-RestoreIndividualApps }
+            "Services" { Menu-RestoreIndividualServices }
+            "Privacy" { Menu-RestoreIndividualPrivacy }
+            "Latency" { Menu-RestoreIndividualLatency }
+            "VBS" {
                 Clear-Host
                 Write-Host "[*] Re-enabling VBS & Security Hypervisor..." -ForegroundColor Yellow
                 bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
@@ -810,7 +804,7 @@ function Menu-RollbackCenter {
                 Write-Host "[+] VBS / Hypervisor set to AUTO (default). Reboot required!" -ForegroundColor Green
                 Pause-Console
             }
-            "6" {
+            "AllStoreApps" {
                 Clear-Host
                 Write-Host "[*] Re-registering all built-in Windows Store packages..." -ForegroundColor Yellow
                 Get-AppxPackage -AllUsers | ForEach-Object {
@@ -819,16 +813,11 @@ function Menu-RollbackCenter {
                 Write-Host "[+] Store app registration finished!" -ForegroundColor Green
                 Pause-Console
             }
-            "7" {
+            "SystemRestore" {
                 Start-Process "rstrui.exe"
             }
-            "Q" { break }
-            default {
-                Write-Host "Invalid choice!" -ForegroundColor Red
-                Start-Sleep -Seconds 1
-            }
         }
-    } while ($rbChoice -ne "Q")
+    }
 }
 
 # ==============================================================================
