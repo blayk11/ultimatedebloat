@@ -611,6 +611,78 @@ function Menu-RestoreIndividualApps {
     Pause-Console
 }
 
+function Menu-RestoreIndividualApps {
+    $restoreApps = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsStore*"; Label = "Microsoft Store (Store Core Installer)"; WingetId = "9WZDNCRFJBMP"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingWeather*"; Label = "Weather (Bing Weather)"; WingetId = "9WZDNCRFJ3Q2"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingNews*"; Label = "News (Microsoft News)"; WingetId = "9WZDNCRFHVFW"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingFinance*"; Label = "Money / Finance (MSN Money)"; WingetId = "9WZDNCRFHV4V"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingSports*"; Label = "Sports (MSN Sports)"; WingetId = "9WZDNCRFHVH4"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.GetHelp*"; Label = "Get Help"; WingetId = "9PKDZBMV1R3T"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Getstarted*"; Label = "Tips / Get Started"; WingetId = "9WZDNCRFJBD8"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Microsoft3DViewer*"; Label = "3D Viewer"; WingetId = "9NBLGGH42THS"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftOfficeHub*"; Label = "Office Hub (Microsoft 365)"; WingetId = "9WZDNCRD29V9"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftSolitaireCollection*"; Label = "Solitaire Collection"; WingetId = "9WZDNCRFJ347"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MixedReality.Portal*"; Label = "Mixed Reality Portal"; WingetId = "9NG1H8B3ZC7M"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.People*"; Label = "People (Microsoft People)"; WingetId = "9NBLGGH10PG8"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.SkypeApp*"; Label = "Skype"; WingetId = "9WZDNCRFJ364"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Todos*"; Label = "Microsoft To Do"; WingetId = "9NBLGGH5R558"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsAlarms*"; Label = "Windows Clock & Alarms"; WingetId = "9WZDNCRFJ3PR"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsCalculator*"; Label = "Windows Calculator"; WingetId = "9WZDNCRFJ367"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsFeedbackHub*"; Label = "Feedback Hub"; WingetId = "9NBLGGH4R32N"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsMaps*"; Label = "Windows Maps"; WingetId = "9WZDNCRBXB69"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsSoundRecorder*"; Label = "Voice Recorder / Sound Recorder"; WingetId = "9WZDNCRFHWKN"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.YourPhone*"; Label = "Phone Link"; WingetId = "9NMPJ99VJBWV"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneMusic*"; Label = "Windows Media Player / Groove"; WingetId = "9WZDNCRSUB40"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneVideo*"; Label = "Movies & TV (Films & TV)"; WingetId = "9WZDNCRFJ3P2"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Clipchamp.Clipchamp*"; Label = "Clipchamp Video Editor"; WingetId = "9P1J8S7CCWWT"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.PowerAutomateDesktop*"; Label = "Power Automate"; WingetId = "9NX1NDD33ZGS"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Copilot*"; Label = "Microsoft Copilot App"; WingetId = "9NHT9RB2F4HD"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.OutlookForWindows*"; Label = "Outlook for Windows"; WingetId = "9NRXDXMKZQP7"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.XboxGamingOverlay*"; Label = "Xbox Game Bar"; WingetId = "9NZKPSTSNW4P"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.GamingApp*"; Label = "Xbox App / PC Gaming"; WingetId = "9MV0B5HZVK9Z"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsTerminal*"; Label = "Windows Terminal"; WingetId = "9N0DX20HK701"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Paint*"; Label = "Paint"; WingetId = "9PCFS5B6T72H"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsNotepad*"; Label = "Notepad"; WingetId = "9MSMLRH6LZF3"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ScreenSketch*"; Label = "Snipping Tool"; WingetId = "9MZ95KL8MR0L"; Selected = $false }
+    )
+
+    $selected = Show-MultiSelectMenu -Title "RESTORE INDIVIDUAL APPS (REINSTALL / RE-REGISTER)" -Subtitle "Select the specific app(s) you want to reinstall or repair on your PC." -Items $restoreApps
+    if ($null -eq $selected) { return }
+
+    $chosen = @($selected | Where-Object { $_.Selected })
+    if ($chosen.Count -eq 0) {
+        Clear-Host
+        Write-Host "[!] No apps were selected for restoration." -ForegroundColor Yellow
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host " RESTORE CONFIRMATION - INDIVIDUAL APPS" -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host "You have selected $($chosen.Count) application(s) to restore:" -ForegroundColor White
+    foreach ($item in $chosen) {
+        Write-Host " [X] $($item.Label)" -ForegroundColor Green
+    }
+    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+    $confirm = (Read-Host "Do you want to proceed with restoring these apps? (Y/N / S/N)").Trim().ToUpper()
+    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
+        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "[*] Restoring selected application packages..." -ForegroundColor Yellow
+    foreach ($item in $chosen) {
+        Install-SpecificUwpApp -Pattern $item.Pattern -Label $item.Label -WingetId $item.WingetId
+    }
+    Write-Host "[+] App restoration process completed!" -ForegroundColor Green
+    Pause-Console
+}
+
 function Menu-RestoreIndividualServices {
     $serviceDefaults = [System.Collections.Generic.List[PSObject]]@(
         [PSCustomObject]@{ ServiceName = "SysMain"; Label = "SysMain / Superfetch (Restore to Automatic)"; Startup = "Automatic"; Selected = $true },
@@ -628,17 +700,39 @@ function Menu-RestoreIndividualServices {
     $selected = Show-MultiSelectMenu -Title "RESTORE BACKGROUND SERVICES" -Subtitle "Select which specific service(s) you want to re-enable and restore to defaults." -Items $serviceDefaults
     if ($null -eq $selected) { return }
 
+    $chosen = @($selected | Where-Object { $_.Selected })
+    if ($chosen.Count -eq 0) {
+        Clear-Host
+        Write-Host "[!] No services were selected for restoration." -ForegroundColor Yellow
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host " RESTORE CONFIRMATION - BACKGROUND SERVICES" -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host "You have selected $($chosen.Count) service(s) to restore:" -ForegroundColor White
+    foreach ($item in $chosen) {
+        Write-Host " [X] $($item.Label)" -ForegroundColor Green
+    }
+    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+    $confirm = (Read-Host "Do you want to proceed with restoring these services? (Y/N / S/N)").Trim().ToUpper()
+    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
+        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+        Pause-Console
+        return
+    }
+
     Clear-Host
     Write-Host "[*] Restoring selected background services..." -ForegroundColor Yellow
-    foreach ($item in $selected) {
-        if ($item.Selected) {
-            $svc = Get-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
-            if ($svc) {
-                Write-Host " [+] Restoring: $($item.Label)" -ForegroundColor Cyan
-                Set-Service -Name $item.ServiceName -StartupType $item.Startup -ErrorAction SilentlyContinue
-                if ($item.Startup -eq "Automatic") {
-                    Start-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
-                }
+    foreach ($item in $chosen) {
+        $svc = Get-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
+        if ($svc) {
+            Write-Host " [+] Restoring: $($item.Label)" -ForegroundColor Cyan
+            Set-Service -Name $item.ServiceName -StartupType $item.Startup -ErrorAction SilentlyContinue
+            if ($item.Startup -eq "Automatic") {
+                Start-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
             }
         }
     }
@@ -661,10 +755,33 @@ function Menu-RestoreIndividualPrivacy {
     $selected = Show-MultiSelectMenu -Title "RESTORE PRIVACY & TELEMETRY SETTINGS" -Subtitle "Select which specific telemetry, AI, or search feature(s) to re-enable." -Items $privacyItems
     if ($null -eq $selected) { return }
 
+    $chosen = @($selected | Where-Object { $_.Selected })
+    if ($chosen.Count -eq 0) {
+        Clear-Host
+        Write-Host "[!] No privacy/telemetry settings were selected for restoration." -ForegroundColor Yellow
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host " RESTORE CONFIRMATION - PRIVACY & TELEMETRY" -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host "You have selected $($chosen.Count) privacy setting(s) to restore:" -ForegroundColor White
+    foreach ($opt in $chosen) {
+        Write-Host " [X] $($opt.Label)" -ForegroundColor Green
+    }
+    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+    $confirm = (Read-Host "Do you want to proceed with restoring these settings? (Y/N / S/N)").Trim().ToUpper()
+    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
+        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+        Pause-Console
+        return
+    }
+
     Clear-Host
     Write-Host "[*] Restoring selected privacy settings..." -ForegroundColor Yellow
-    foreach ($opt in $selected) {
-        if (-not $opt.Selected) { continue }
+    foreach ($opt in $chosen) {
         Write-Host " [+] Restoring: $($opt.Label)" -ForegroundColor Cyan
         switch ($opt.Id) {
             "BingSearch" {
@@ -727,10 +844,33 @@ function Menu-RestoreIndividualLatency {
     $selected = Show-MultiSelectMenu -Title "RESTORE LATENCY & HARDWARE TWEAKS" -Subtitle "Select which specific kernel, power or latency tweak(s) to restore." -Items $latencyItems
     if ($null -eq $selected) { return }
 
+    $chosen = @($selected | Where-Object { $_.Selected })
+    if ($chosen.Count -eq 0) {
+        Clear-Host
+        Write-Host "[!] No latency/hardware settings were selected for restoration." -ForegroundColor Yellow
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host " RESTORE CONFIRMATION - HARDWARE & LATENCY" -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host "You have selected $($chosen.Count) tweak(s) to restore:" -ForegroundColor White
+    foreach ($item in $chosen) {
+        Write-Host " [X] $($item.Label)" -ForegroundColor Green
+    }
+    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+    $confirm = (Read-Host "Do you want to proceed with restoring these settings? (Y/N / S/N)").Trim().ToUpper()
+    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
+        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+        Pause-Console
+        return
+    }
+
     Clear-Host
     Write-Host "[*] Restoring selected hardware and latency settings..." -ForegroundColor Yellow
-    foreach ($item in $selected) {
-        if (-not $item.Selected) { continue }
+    foreach ($item in $chosen) {
         Write-Host " [+] Restoring: $($item.Label)" -ForegroundColor Cyan
         switch ($item.Id) {
             "Quantum" {
@@ -787,6 +927,30 @@ function Menu-RollbackCenter {
 
     $selected = Show-MultiSelectMenu -Title "RESTORE & ROLLBACK COMMAND CENTER" -Subtitle "Use [SPACE] to select the restoration categories or actions you want to run." -Items $hubCategories
     if ($null -eq $selected) { return }
+
+    $chosenHub = @($selected | Where-Object { $_.Selected })
+    if ($chosenHub.Count -eq 0) {
+        Clear-Host
+        Write-Host "[!] No restore options were selected." -ForegroundColor Yellow
+        Pause-Console
+        return
+    }
+
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host " CONFIRM RESTORATION CATEGORIES" -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Cyan
+    Write-Host "You selected $($chosenHub.Count) action(s)/category(ies):" -ForegroundColor White
+    foreach ($item in $chosenHub) {
+        Write-Host " [X] $($item.Label)" -ForegroundColor Green
+    }
+    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+    $confirm = (Read-Host "Do you want to proceed with the selected categories? (Y/N / S/N)").Trim().ToUpper()
+    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
+        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+        Pause-Console
+        return
+    }
 
     foreach ($item in $selected) {
         if (-not $item.Selected) { continue }
