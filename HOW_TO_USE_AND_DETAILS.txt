@@ -33,7 +33,7 @@ METHOD 3 (Terminal in Directory):
 --------------------------------------------------------------------------------
  2. HOW TO NAVIGATE AND SELECT ITEMS (INTERACTIVE TUI)
 --------------------------------------------------------------------------------
-Inside any category menu ([2], [3], [4], [5], [7]):
+Inside any category menu ([2], [3], [4], [5], [7], [8]):
 
 - [▲ / ▼] Up / Down Arrow Keys : Navigate items one-by-one with live cursor highlight.
 - [Page Up / Page Down]        : Jump blocks of items for rapid browsing.
