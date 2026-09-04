@@ -97,6 +97,16 @@ Inside any category menu ([2], [3], [4], [5], [7]):
       Update download cache, Prefetch, and Recycle Bin.
     - How it works: Recursively cleans cache directories and calls Clear-RecycleBin.
 
+[8] Restore & Rollback Center (Undo Hub):
+    - What it does: Allows instant rollback of any tweaked setting back to original Windows defaults.
+    - How it works:
+      * Restores services startup configuration (Automatic/Manual).
+      * Removes debloat registry override keys for Telemetry, Copilot, Bing and Ads.
+      * Reverts Win32PrioritySeparation to 2, re-enables GameDVR, and resets power scheme.
+      * Re-enables hypervisor and VBS.
+      * Re-registers stock Windows UWP app packages.
+      * Direct launcher for System Restore GUI (rstrui.exe).
+
 --------------------------------------------------------------------------------
  Credits: Engineered by blayk11 (https://github.com/blayk11)
  License: MIT License

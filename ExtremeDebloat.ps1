@@ -62,6 +62,21 @@ function Set-RegString {
     }
 }
 
+function Remove-RegValue {
+    param (
+        [string]$Path,
+        [string]$Name
+    )
+    try {
+        if (Test-Path $Path) {
+            Remove-ItemProperty -Path $Path -Name $Name -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+    } catch {
+        $regPath = $Path.Replace("HKLM:\", "HKLM\").Replace("HKCU:\", "HKCU\")
+        cmd.exe /c "reg delete `"$regPath`" /v `"$Name`" /f" 2>$null | Out-Null
+    }
+}
+
 # ==============================================================================
 # SMOOTH & STABLE TUI ENGINE (ZERO-FLICKER & DYNAMIC PAGINATION)
 # ==============================================================================
@@ -516,6 +531,144 @@ function Menu-DeepCleaning {
 }
 
 # ==============================================================================
+# 8. RESTORE & ROLLBACK CENTER (UNDO CHANGES)
+# ==============================================================================
+function Menu-RollbackCenter {
+    $rollbackOptions = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Id = "RestoreServices"; Label = "Restore Background Services to Windows Default (Automatic/Manual)"; Selected = $true },
+        [PSCustomObject]@{ Id = "RestoreTelemetry"; Label = "Restore Privacy & Telemetry Settings (Re-enable Bing & AI)"; Selected = $true },
+        [PSCustomObject]@{ Id = "RestoreLatency"; Label = "Restore Kernel & Latency Tweaks to Stock Windows Defaults"; Selected = $true },
+        [PSCustomObject]@{ Id = "RestoreVBS"; Label = "Re-enable VBS / Core Isolation & Hypervisor"; Selected = $true },
+        [PSCustomObject]@{ Id = "ReinstallStoreApps"; Label = "Reinstall / Repair Default Windows UWP & Store Packages"; Selected = $false },
+        [PSCustomObject]@{ Id = "OpenSystemRestore"; Label = "Launch Windows System Restore Wizard (rstrui.exe)"; Selected = $false }
+    )
+
+    $selected = Show-MultiSelectMenu -Title "RESTORE & ROLLBACK CENTER" -Subtitle "Select the components and system settings you want to revert to defaults." -Items $rollbackOptions
+    if ($null -eq $selected) { return }
+
+    Clear-Host
+    Write-Host "[*] Executing Rollback & Restoration operations..." -ForegroundColor Yellow
+
+    foreach ($opt in $selected) {
+        if (-not $opt.Selected) { continue }
+        Write-Host " [+] Restoring: $($opt.Label)" -ForegroundColor Cyan
+        switch ($opt.Id) {
+            "RestoreServices" {
+                # Map services back to default StartupTypes
+                $serviceDefaults = @{
+                    "SysMain"          = "Automatic"
+                    "DiagTrack"        = "Automatic"
+                    "dmwappushservice" = "Manual"
+                    "MapsBroker"       = "Automatic"
+                    "Fax"              = "Manual"
+                    "RetailDemo"       = "Manual"
+                    "WpcMonSvc"        = "Manual"
+                    "SharedRealitySvc" = "Manual"
+                    "WerSvc"           = "Manual"
+                    "PcaSvc"           = "Manual"
+                }
+                foreach ($svcName in $serviceDefaults.Keys) {
+                    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
+                    if ($svc) {
+                        Set-Service -Name $svcName -StartupType $serviceDefaults[$svcName] -ErrorAction SilentlyContinue
+                        if ($serviceDefaults[$svcName] -eq "Automatic") {
+                            Start-Service -Name $svcName -ErrorAction SilentlyContinue
+                        }
+                    }
+                }
+            }
+            "RestoreTelemetry" {
+                # Bing & Search
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "DisableWebSearch"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "ConnectedSearchUseWeb"
+                Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana"
+                
+                # Copilot & AI
+                Remove-RegValue "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis"
+                
+                # Ads & Content Delivery
+                $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+                Remove-RegValue $cdm "ContentDeliveryAllowed"
+                Remove-RegValue $cdm "OemPreInstalledAppsEnabled"
+                Remove-RegValue $cdm "PreInstalledAppsEnabled"
+                Remove-RegValue $cdm "PreInstalledAppsEverEnabled"
+                Remove-RegValue $cdm "SilentInstalledAppsEnabled"
+                Remove-RegValue $cdm "SubscribedContent-338387Enabled"
+                Remove-RegValue $cdm "SubscribedContent-338388Enabled"
+                Remove-RegValue $cdm "SubscribedContent-338389Enabled"
+                Remove-RegValue $cdm "SubscribedContent-353698Enabled"
+                Remove-RegValue $cdm "SystemPaneSuggestionsEnabled"
+                
+                # Widgets & Activity History
+                Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "EnableActivityFeed"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "UploadUserActivities"
+                Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry"
+                Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs"
+            }
+            "RestoreLatency" {
+                # Stock Windows priority separation (Hex 2 = decimal 2)
+                Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" 2
+                
+                # Re-enable GameDVR defaults
+                Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 1
+                Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_Enabled" 1
+                Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_FSEBehaviorMode" 0
+                Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_HonorUserFSEBehaviorMode" 0
+                Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_DXGIHonorFSEWindowsCompatible" 0
+                
+                # Restore Multimedia & Network Throttling defaults
+                Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" 10
+                Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" 20
+                
+                # Restore Game Task Profile defaults
+                $gameProfile = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
+                Set-RegDWord $gameProfile "Affinity" 0
+                Set-RegString $gameProfile "Background Only" "False"
+                Set-RegDWord $gameProfile "Clock Rate" 10000
+                Set-RegDWord $gameProfile "GPU Priority" 8
+                Set-RegDWord $gameProfile "Priority" 2
+                Set-RegString $gameProfile "Scheduling Category" "Medium"
+                Set-RegString $gameProfile "SFIO Priority" "Normal"
+                
+                # Restore UI Delays
+                Set-RegString "HKCU:\Control Panel\Desktop" "MenuShowDelay" "400"
+                Set-RegString "HKCU:\Control Panel\Desktop" "WaitToKillAppTimeout" "5000"
+                Set-RegString "HKCU:\Control Panel\Desktop" "HungAppTimeout" "5000"
+
+                # Restore Balanced Power Plan (381b4222-f694-41f0-9685-ff5bb260df2e)
+                powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e 2>$null | Out-Null
+            }
+            "RestoreVBS" {
+                bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
+                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity"
+                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled"
+            }
+            "ReinstallStoreApps" {
+                Write-Host " [*] Re-registering all built-in Windows UWP Store apps..." -ForegroundColor Yellow
+                Get-AppxPackage -AllUsers | ForEach-Object {
+                    Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
+                }
+            }
+            "OpenSystemRestore" {
+                Start-Process "rstrui.exe"
+            }
+        }
+    }
+
+    Write-Host ""
+    Write-Host "========================================================================" -ForegroundColor Green
+    Write-Host " [OK] ROLLBACK FINISHED! REBOOT RECOMMENDED TO FULLY RESTORE DEFAULTS." -ForegroundColor Green
+    Write-Host "========================================================================" -ForegroundColor Green
+    Pause-Console
+}
+
+# ==============================================================================
 # INTERACTIVE MAIN MENU
 # ==============================================================================
 do {
@@ -534,6 +687,7 @@ do {
     Write-Host "  [5] Low Latency & Hardware Tweaks (Interactive Menu with [X])" -ForegroundColor Green
     Write-Host "  [6] Disable VBS / Core Isolation (Boosts FPS & Frametime)" -ForegroundColor Blue
     Write-Host "  [7] Deep Disk & Cache Cleaner (Interactive Menu with [X])" -ForegroundColor Blue
+    Write-Host "  [8] RESTORE / ROLLBACK HUB (Revert Tweaks to Windows Defaults)" -ForegroundColor Green
     Write-Host "  ------------------------------------------------------------------------" -ForegroundColor DarkGray
     Write-Host "  [A] APPLY ALL RECOMMENDED DEFAULTS (FULL TURBO MODE)" -ForegroundColor Red
     Write-Host "  [R] Reboot Computer Now" -ForegroundColor DarkYellow
@@ -549,6 +703,7 @@ do {
         "5" { Menu-LowLatency }
         "6" { Invoke-DisableVBS }
         "7" { Menu-DeepCleaning }
+        "8" { Menu-RollbackCenter }
         "A" {
             Invoke-RestorePoint
             Clear-Host

@@ -119,6 +119,15 @@ Disables Hypervisor-Enforced Code Integrity (HVCI) and Virtualization-Based Secu
 ### 7. 🧹 Deep Disk & Cache Cleaner
 Deep cleanup of system temporary files (`C:\Windows\Temp`), user temp files (`%TEMP%`), Windows Update download cache, Prefetch cache, and Recycle Bin.
 
+### 8. 🔄 Restore & Rollback Center (Undo Hub)
+Full peace-of-mind rollback engine allowing selective or full restoration:
+* Restores background services to native Windows defaults (`Automatic`/`Manual`).
+* Re-enables Bing search, Copilot AI, Start Menu widgets, and Windows Telemetry policies.
+* Restores stock latency parameters (`Win32PrioritySeparation = 2`, GameDVR, Balanced Power Plan).
+* Re-enables Virtualization-Based Security (VBS) and Windows Hypervisor.
+* Re-registers and restores default Microsoft Store and provisioned UWP packages.
+* Direct shortcut to launch the Windows System Restore Wizard (`rstrui.exe`).
+
 ---
 
 ## 🚀 Alternative Execution Methods
