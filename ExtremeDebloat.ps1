@@ -561,55 +561,6 @@ function Menu-DeepCleaning {
 # ==============================================================================
 # RESTORE SUBMENUS (GRANULAR RESTORATION PER CATEGORY)
 # ==============================================================================
-function Menu-RestoreIndividualApps {
-    $restoreApps = [System.Collections.Generic.List[PSObject]]@(
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsStore*"; Label = "Microsoft Store (Store Core Installer)"; WingetId = "9WZDNCRFJBMP"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.BingWeather*"; Label = "Weather (Bing Weather)"; WingetId = "9WZDNCRFJ3Q2"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.BingNews*"; Label = "News (Microsoft News)"; WingetId = "9WZDNCRFHVFW"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.BingFinance*"; Label = "Money / Finance (MSN Money)"; WingetId = "9WZDNCRFHV4V"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.BingSports*"; Label = "Sports (MSN Sports)"; WingetId = "9WZDNCRFHVH4"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.GetHelp*"; Label = "Get Help"; WingetId = "9PKDZBMV1R3T"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.Getstarted*"; Label = "Tips / Get Started"; WingetId = "9WZDNCRFJBD8"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.Microsoft3DViewer*"; Label = "3D Viewer"; WingetId = "9NBLGGH42THS"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftOfficeHub*"; Label = "Office Hub (Microsoft 365)"; WingetId = "9WZDNCRD29V9"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftSolitaireCollection*"; Label = "Solitaire Collection"; WingetId = "9WZDNCRFJ347"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.MixedReality.Portal*"; Label = "Mixed Reality Portal"; WingetId = "9NG1H8B3ZC7M"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.People*"; Label = "People (Microsoft People)"; WingetId = "9NBLGGH10PG8"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.SkypeApp*"; Label = "Skype"; WingetId = "9WZDNCRFJ364"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.Todos*"; Label = "Microsoft To Do"; WingetId = "9NBLGGH5R558"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsAlarms*"; Label = "Windows Clock & Alarms"; WingetId = "9WZDNCRFJ3PR"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsCalculator*"; Label = "Windows Calculator"; WingetId = "9WZDNCRFJ367"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsFeedbackHub*"; Label = "Feedback Hub"; WingetId = "9NBLGGH4R32N"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsMaps*"; Label = "Windows Maps"; WingetId = "9WZDNCRBXB69"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsSoundRecorder*"; Label = "Voice Recorder / Sound Recorder"; WingetId = "9WZDNCRFHWKN"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.YourPhone*"; Label = "Phone Link"; WingetId = "9NMPJ99VJBWV"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneMusic*"; Label = "Windows Media Player / Groove"; WingetId = "9WZDNCRSUB40"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneVideo*"; Label = "Movies & TV (Films & TV)"; WingetId = "9WZDNCRFJ3P2"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Clipchamp.Clipchamp*"; Label = "Clipchamp Video Editor"; WingetId = "9P1J8S7CCWWT"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.PowerAutomateDesktop*"; Label = "Power Automate"; WingetId = "9NX1NDD33ZGS"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.Copilot*"; Label = "Microsoft Copilot App"; WingetId = "9NHT9RB2F4HD"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.OutlookForWindows*"; Label = "Outlook for Windows"; WingetId = "9NRXDXMKZQP7"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.XboxGamingOverlay*"; Label = "Xbox Game Bar"; WingetId = "9NZKPSTSNW4P"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.GamingApp*"; Label = "Xbox App / PC Gaming"; WingetId = "9MV0B5HZVK9Z"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsTerminal*"; Label = "Windows Terminal"; WingetId = "9N0DX20HK701"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.Paint*"; Label = "Paint"; WingetId = "9PCFS5B6T72H"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsNotepad*"; Label = "Notepad"; WingetId = "9MSMLRH6LZF3"; Selected = $false },
-        [PSCustomObject]@{ Pattern = "*Microsoft.ScreenSketch*"; Label = "Snipping Tool"; WingetId = "9MZ95KL8MR0L"; Selected = $false }
-    )
-
-    $selected = Show-MultiSelectMenu -Title "RESTORE INDIVIDUAL APPS (REINSTALL / RE-REGISTER)" -Subtitle "Select the specific app(s) you want to reinstall or repair on your PC." -Items $restoreApps
-    if ($null -eq $selected) { return }
-
-    Clear-Host
-    Write-Host "[*] Restoring selected application packages..." -ForegroundColor Yellow
-    foreach ($item in $selected) {
-        if ($item.Selected) {
-            Install-SpecificUwpApp -Pattern $item.Pattern -Label $item.Label -WingetId $item.WingetId
-        }
-    }
-    Write-Host "[+] App restoration process completed!" -ForegroundColor Green
-    Pause-Console
-}
 
 function Menu-RestoreIndividualApps {
     $restoreApps = [System.Collections.Generic.List[PSObject]]@(
