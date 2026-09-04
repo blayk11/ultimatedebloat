@@ -915,73 +915,82 @@ function Menu-RestoreIndividualLatency {
 # 8. RESTORE & ROLLBACK CENTER (UNDO HUB)
 # ==============================================================================
 function Menu-RollbackCenter {
-    $hubCategories = [System.Collections.Generic.List[PSObject]]@(
-        [PSCustomObject]@{ Id = "Apps"; Label = "Reinstall / Restore Specific Apps (Item-by-item selection)"; Selected = $false },
-        [PSCustomObject]@{ Id = "Services"; Label = "Restore Specific Background Services (Item-by-item selection)"; Selected = $false },
-        [PSCustomObject]@{ Id = "Privacy"; Label = "Restore Privacy, AI & Telemetry Settings (Item-by-item selection)"; Selected = $false },
-        [PSCustomObject]@{ Id = "Latency"; Label = "Restore Latency & Hardware Tweaks (Item-by-item selection)"; Selected = $false },
-        [PSCustomObject]@{ Id = "VBS"; Label = "Re-enable VBS / Core Isolation & Security Hypervisor"; Selected = $false },
-        [PSCustomObject]@{ Id = "AllStoreApps"; Label = "Batch Re-register ALL Factory Windows Store Apps"; Selected = $false },
-        [PSCustomObject]@{ Id = "SystemRestore"; Label = "Launch Windows System Restore Wizard (rstrui.exe)"; Selected = $false }
-    )
-
-    $selected = Show-MultiSelectMenu -Title "RESTORE & ROLLBACK COMMAND CENTER" -Subtitle "Use [SPACE] to select the restoration categories or actions you want to run." -Items $hubCategories
-    if ($null -eq $selected) { return }
-
-    $chosenHub = @($selected | Where-Object { $_.Selected })
-    if ($chosenHub.Count -eq 0) {
+    do {
+        try { [Console]::CursorVisible = $true } catch {}
         Clear-Host
-        Write-Host "[!] No restore options were selected." -ForegroundColor Yellow
-        Pause-Console
-        return
-    }
+        Write-Host "==========================================================================" -ForegroundColor Cyan
+        Write-Host "               RESTORE & ROLLBACK COMMAND CENTER (UNDO HUB)               " -ForegroundColor Yellow
+        Write-Host "             Created by: blayk11 | https://github.com/blayk11             " -ForegroundColor Cyan
+        Write-Host "==========================================================================" -ForegroundColor Cyan
+        Write-Host " Select a category to restore settings back to Windows defaults:" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  [1] Reinstall / Restore Specific Apps (Interactive Submenu with [X])" -ForegroundColor Magenta
+        Write-Host "  [2] Restore Background Services (Interactive Submenu with [X])" -ForegroundColor Yellow
+        Write-Host "  [3] Restore Privacy, AI & Telemetry Settings (Interactive Submenu with [X])" -ForegroundColor Yellow
+        Write-Host "  [4] Restore Latency & Hardware Tweaks (Interactive Submenu with [X])" -ForegroundColor Green
+        Write-Host "  [5] Re-enable VBS / Core Isolation & Security Hypervisor" -ForegroundColor Blue
+        Write-Host "  [6] Batch Re-register ALL Factory Windows Store Apps" -ForegroundColor Cyan
+        Write-Host "  [7] Launch Windows System Restore Wizard (rstrui.exe)" -ForegroundColor White
+        Write-Host "  ------------------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "  [Q] Return to Main Menu" -ForegroundColor DarkYellow
+        Write-Host ""
+        $rollbackChoice = (Read-Host "Enter your choice").Trim().ToUpper()
 
-    Clear-Host
-    Write-Host "==========================================================================" -ForegroundColor Cyan
-    Write-Host " CONFIRM RESTORATION CATEGORIES" -ForegroundColor Yellow
-    Write-Host "==========================================================================" -ForegroundColor Cyan
-    Write-Host "You selected $($chosenHub.Count) action(s)/category(ies):" -ForegroundColor White
-    foreach ($item in $chosenHub) {
-        Write-Host " [X] $($item.Label)" -ForegroundColor Green
-    }
-    Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
-    $confirm = (Read-Host "Do you want to proceed with the selected categories? (Y/N / S/N)").Trim().ToUpper()
-    if ($confirm -ne "Y" -and $confirm -ne "S" -and $confirm -ne "SIM" -and $confirm -ne "YES") {
-        Write-Host "[-] Action cancelled by user." -ForegroundColor Red
-        Pause-Console
-        return
-    }
-
-    foreach ($item in $selected) {
-        if (-not $item.Selected) { continue }
-        switch ($item.Id) {
-            "Apps" { Menu-RestoreIndividualApps }
-            "Services" { Menu-RestoreIndividualServices }
-            "Privacy" { Menu-RestoreIndividualPrivacy }
-            "Latency" { Menu-RestoreIndividualLatency }
-            "VBS" {
+        switch ($rollbackChoice) {
+            "1" { Menu-RestoreIndividualApps }
+            "2" { Menu-RestoreIndividualServices }
+            "3" { Menu-RestoreIndividualPrivacy }
+            "4" { Menu-RestoreIndividualLatency }
+            "5" {
                 Clear-Host
-                Write-Host "[*] Re-enabling VBS & Security Hypervisor..." -ForegroundColor Yellow
-                bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
-                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity"
-                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled"
-                Write-Host "[+] VBS / Hypervisor set to AUTO (default). Reboot required!" -ForegroundColor Green
-                Pause-Console
-            }
-            "AllStoreApps" {
-                Clear-Host
-                Write-Host "[*] Re-registering all built-in Windows Store packages..." -ForegroundColor Yellow
-                Get-AppxPackage -AllUsers | ForEach-Object {
-                    Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
+                Write-Host "==========================================================================" -ForegroundColor Cyan
+                Write-Host " RESTORE VBS / CORE ISOLATION" -ForegroundColor Yellow
+                Write-Host "==========================================================================" -ForegroundColor Cyan
+                Write-Host "This will re-enable Virtualization-Based Security (VBS) and Hypervisor." -ForegroundColor White
+                Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+                $confirm = (Read-Host "Do you want to re-enable VBS and Hypervisor? (Y/N / S/N)").Trim().ToUpper()
+                if ($confirm -eq "Y" -or $confirm -eq "S" -or $confirm -eq "SIM" -or $confirm -eq "YES") {
+                    Clear-Host
+                    Write-Host "[*] Re-enabling VBS & Security Hypervisor..." -ForegroundColor Yellow
+                    bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
+                    Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity"
+                    Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled"
+                    Write-Host "[+] VBS / Hypervisor set to AUTO (default). Reboot required!" -ForegroundColor Green
+                } else {
+                    Write-Host "[-] Action cancelled by user." -ForegroundColor Red
                 }
-                Write-Host "[+] Store app registration finished!" -ForegroundColor Green
                 Pause-Console
             }
-            "SystemRestore" {
+            "6" {
+                Clear-Host
+                Write-Host "==========================================================================" -ForegroundColor Cyan
+                Write-Host " BATCH RE-REGISTER ALL STORE APPS" -ForegroundColor Yellow
+                Write-Host "==========================================================================" -ForegroundColor Cyan
+                Write-Host "This will attempt to re-register all factory Windows Store apps." -ForegroundColor White
+                Write-Host "--------------------------------------------------------------------------" -ForegroundColor DarkGray
+                $confirm = (Read-Host "Do you want to batch re-register all Store apps? (Y/N / S/N)").Trim().ToUpper()
+                if ($confirm -eq "Y" -or $confirm -eq "S" -or $confirm -eq "SIM" -or $confirm -eq "YES") {
+                    Clear-Host
+                    Write-Host "[*] Re-registering all built-in Windows Store packages..." -ForegroundColor Yellow
+                    Get-AppxPackage -AllUsers | ForEach-Object {
+                        Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
+                    }
+                    Write-Host "[+] Store app registration finished!" -ForegroundColor Green
+                } else {
+                    Write-Host "[-] Action cancelled by user." -ForegroundColor Red
+                }
+                Pause-Console
+            }
+            "7" {
                 Start-Process "rstrui.exe"
             }
+            "Q" { break }
+            default {
+                Write-Host "Invalid choice!" -ForegroundColor Red
+                Start-Sleep -Seconds 1
+            }
         }
-    }
+    } while ($rollbackChoice -ne "Q")
 }
 
 # ==============================================================================
