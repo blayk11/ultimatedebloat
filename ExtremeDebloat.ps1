@@ -77,6 +77,34 @@ function Remove-RegValue {
     }
 }
 
+function Install-SpecificUwpApp {
+    param (
+        [string]$Pattern,
+        [string]$Label,
+        [string]$WingetId
+    )
+    Write-Host " [*] Restoring App: $Label..." -ForegroundColor Yellow
+
+    # Method 1: Try registering from provisioned image cache
+    $registered = $false
+    try {
+        $pkg = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $Pattern }
+        if ($pkg) {
+            $manifestPath = (Get-ChildItem -Path "C:\Program Files\WindowsApps" -Recurse -Filter "AppxManifest.xml" -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*$($pkg.DisplayName)*" } | Select-Object -First 1).FullName
+            if ($manifestPath) {
+                Add-AppxPackage -DisableDevelopmentMode -Register $manifestPath -ErrorAction SilentlyContinue
+                $registered = $true
+            }
+        }
+    } catch {}
+
+    # Method 2: Fallback to winget if ID is provided and not restored yet
+    if (-not $registered -and $WingetId) {
+        Write-Host "   [-] Downloading & reinstalling via winget ($WingetId)..." -ForegroundColor DarkGray
+        winget install --id $WingetId --exact --accept-package-agreements --accept-source-agreements --silent 2>$null | Out-Null
+    }
+}
+
 # ==============================================================================
 # SMOOTH & STABLE TUI ENGINE (ZERO-FLICKER & DYNAMIC PAGINATION)
 # ==============================================================================
@@ -531,65 +559,130 @@ function Menu-DeepCleaning {
 }
 
 # ==============================================================================
-# 8. RESTORE & ROLLBACK CENTER (UNDO CHANGES)
+# RESTORE SUBMENUS (GRANULAR RESTORATION PER CATEGORY)
 # ==============================================================================
-function Menu-RollbackCenter {
-    $rollbackOptions = [System.Collections.Generic.List[PSObject]]@(
-        [PSCustomObject]@{ Id = "RestoreServices"; Label = "Restore Background Services to Windows Default (Automatic/Manual)"; Selected = $true },
-        [PSCustomObject]@{ Id = "RestoreTelemetry"; Label = "Restore Privacy & Telemetry Settings (Re-enable Bing & AI)"; Selected = $true },
-        [PSCustomObject]@{ Id = "RestoreLatency"; Label = "Restore Kernel & Latency Tweaks to Stock Windows Defaults"; Selected = $true },
-        [PSCustomObject]@{ Id = "RestoreVBS"; Label = "Re-enable VBS / Core Isolation & Hypervisor"; Selected = $true },
-        [PSCustomObject]@{ Id = "ReinstallStoreApps"; Label = "Reinstall / Repair Default Windows UWP & Store Packages"; Selected = $false },
-        [PSCustomObject]@{ Id = "OpenSystemRestore"; Label = "Launch Windows System Restore Wizard (rstrui.exe)"; Selected = $false }
+function Menu-RestoreIndividualApps {
+    $restoreApps = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsStore*"; Label = "Microsoft Store (Store Core Installer)"; WingetId = "9WZDNCRFJBMP"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingWeather*"; Label = "Weather (Bing Weather)"; WingetId = "9WZDNCRFJ3Q2"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingNews*"; Label = "News (Microsoft News)"; WingetId = "9WZDNCRFHVFW"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingFinance*"; Label = "Money / Finance (MSN Money)"; WingetId = "9WZDNCRFHV4V"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.BingSports*"; Label = "Sports (MSN Sports)"; WingetId = "9WZDNCRFHVH4"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.GetHelp*"; Label = "Get Help"; WingetId = "9PKDZBMV1R3T"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Getstarted*"; Label = "Tips / Get Started"; WingetId = "9WZDNCRFJBD8"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Microsoft3DViewer*"; Label = "3D Viewer"; WingetId = "9NBLGGH42THS"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftOfficeHub*"; Label = "Office Hub (Microsoft 365)"; WingetId = "9WZDNCRD29V9"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MicrosoftSolitaireCollection*"; Label = "Solitaire Collection"; WingetId = "9WZDNCRFJ347"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.MixedReality.Portal*"; Label = "Mixed Reality Portal"; WingetId = "9NG1H8B3ZC7M"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.People*"; Label = "People (Microsoft People)"; WingetId = "9NBLGGH10PG8"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.SkypeApp*"; Label = "Skype"; WingetId = "9WZDNCRFJ364"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Todos*"; Label = "Microsoft To Do"; WingetId = "9NBLGGH5R558"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsAlarms*"; Label = "Windows Clock & Alarms"; WingetId = "9WZDNCRFJ3PR"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsCalculator*"; Label = "Windows Calculator"; WingetId = "9WZDNCRFJ367"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsFeedbackHub*"; Label = "Feedback Hub"; WingetId = "9NBLGGH4R32N"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsMaps*"; Label = "Windows Maps"; WingetId = "9WZDNCRBXB69"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsSoundRecorder*"; Label = "Voice Recorder / Sound Recorder"; WingetId = "9WZDNCRFHWKN"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.YourPhone*"; Label = "Phone Link"; WingetId = "9NMPJ99VJBWV"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneMusic*"; Label = "Windows Media Player / Groove"; WingetId = "9WZDNCRSUB40"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ZuneVideo*"; Label = "Movies & TV (Films & TV)"; WingetId = "9WZDNCRFJ3P2"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Clipchamp.Clipchamp*"; Label = "Clipchamp Video Editor"; WingetId = "9P1J8S7CCWWT"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.PowerAutomateDesktop*"; Label = "Power Automate"; WingetId = "9NX1NDD33ZGS"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Copilot*"; Label = "Microsoft Copilot App"; WingetId = "9NHT9RB2F4HD"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.OutlookForWindows*"; Label = "Outlook for Windows"; WingetId = "9NRXDXMKZQP7"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.XboxGamingOverlay*"; Label = "Xbox Game Bar"; WingetId = "9NZKPSTSNW4P"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.GamingApp*"; Label = "Xbox App / PC Gaming"; WingetId = "9MV0B5HZVK9Z"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsTerminal*"; Label = "Windows Terminal"; WingetId = "9N0DX20HK701"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.Paint*"; Label = "Paint"; WingetId = "9PCFS5B6T72H"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.WindowsNotepad*"; Label = "Notepad"; WingetId = "9MSMLRH6LZF3"; Selected = $false },
+        [PSCustomObject]@{ Pattern = "*Microsoft.ScreenSketch*"; Label = "Snipping Tool"; WingetId = "9MZ95KL8MR0L"; Selected = $false }
     )
 
-    $selected = Show-MultiSelectMenu -Title "RESTORE & ROLLBACK CENTER" -Subtitle "Select the components and system settings you want to revert to defaults." -Items $rollbackOptions
+    $selected = Show-MultiSelectMenu -Title "RESTORE INDIVIDUAL APPS (REINSTALL / RE-REGISTER)" -Subtitle "Select the specific app(s) you want to reinstall or repair on your PC." -Items $restoreApps
     if ($null -eq $selected) { return }
 
     Clear-Host
-    Write-Host "[*] Executing Rollback & Restoration operations..." -ForegroundColor Yellow
+    Write-Host "[*] Restoring selected application packages..." -ForegroundColor Yellow
+    foreach ($item in $selected) {
+        if ($item.Selected) {
+            Install-SpecificUwpApp -Pattern $item.Pattern -Label $item.Label -WingetId $item.WingetId
+        }
+    }
+    Write-Host "[+] App restoration process completed!" -ForegroundColor Green
+    Pause-Console
+}
 
+function Menu-RestoreIndividualServices {
+    $serviceDefaults = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ ServiceName = "SysMain"; Label = "SysMain / Superfetch (Restore to Automatic)"; Startup = "Automatic"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "DiagTrack"; Label = "DiagTrack / Telemetry (Restore to Automatic)"; Startup = "Automatic"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "dmwappushservice"; Label = "dmwappushservice (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "MapsBroker"; Label = "MapsBroker / Downloaded Maps (Restore to Automatic)"; Startup = "Automatic"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "Fax"; Label = "Fax Service (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "RetailDemo"; Label = "Retail Demo Service (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "WpcMonSvc"; Label = "Parental Controls (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "SharedRealitySvc"; Label = "Spatial / Mixed Reality Service (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "WerSvc"; Label = "Windows Error Reporting (Restore to Manual)"; Startup = "Manual"; Selected = $true },
+        [PSCustomObject]@{ ServiceName = "PcaSvc"; Label = "Program Compatibility Assistant (Restore to Manual)"; Startup = "Manual"; Selected = $true }
+    )
+
+    $selected = Show-MultiSelectMenu -Title "RESTORE BACKGROUND SERVICES" -Subtitle "Select which specific service(s) you want to re-enable and restore to defaults." -Items $serviceDefaults
+    if ($null -eq $selected) { return }
+
+    Clear-Host
+    Write-Host "[*] Restoring selected background services..." -ForegroundColor Yellow
+    foreach ($item in $selected) {
+        if ($item.Selected) {
+            $svc = Get-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
+            if ($svc) {
+                Write-Host " [+] Restoring: $($item.Label)" -ForegroundColor Cyan
+                Set-Service -Name $item.ServiceName -StartupType $item.Startup -ErrorAction SilentlyContinue
+                if ($item.Startup -eq "Automatic") {
+                    Start-Service -Name $item.ServiceName -ErrorAction SilentlyContinue
+                }
+            }
+        }
+    }
+    Write-Host "[+] Background services restored successfully!" -ForegroundColor Green
+    Pause-Console
+}
+
+function Menu-RestoreIndividualPrivacy {
+    $privacyItems = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Id = "BingSearch"; Label = "Re-enable Bing Search in Start Menu"; Selected = $true },
+        [PSCustomObject]@{ Id = "Cortana"; Label = "Re-enable Cortana & Legacy Voice Assistant Policies"; Selected = $true },
+        [PSCustomObject]@{ Id = "Copilot"; Label = "Re-enable Microsoft Copilot AI System-wide"; Selected = $true },
+        [PSCustomObject]@{ Id = "Recall"; Label = "Re-enable Windows Recall / AI Data Analysis"; Selected = $true },
+        [PSCustomObject]@{ Id = "Ads"; Label = "Re-enable Windows Suggestions, Tips & Content Delivery"; Selected = $true },
+        [PSCustomObject]@{ Id = "Widgets"; Label = "Re-enable Taskbar Widgets & News Feeds"; Selected = $true },
+        [PSCustomObject]@{ Id = "ActivityHistory"; Label = "Re-enable Activity History & Timeline Uploads"; Selected = $true },
+        [PSCustomObject]@{ Id = "TelemetryDiag"; Label = "Re-enable Diagnostic Data Collection & App Tracking"; Selected = $true }
+    )
+
+    $selected = Show-MultiSelectMenu -Title "RESTORE PRIVACY & TELEMETRY SETTINGS" -Subtitle "Select which specific telemetry, AI, or search feature(s) to re-enable." -Items $privacyItems
+    if ($null -eq $selected) { return }
+
+    Clear-Host
+    Write-Host "[*] Restoring selected privacy settings..." -ForegroundColor Yellow
     foreach ($opt in $selected) {
         if (-not $opt.Selected) { continue }
         Write-Host " [+] Restoring: $($opt.Label)" -ForegroundColor Cyan
         switch ($opt.Id) {
-            "RestoreServices" {
-                # Map services back to default StartupTypes
-                $serviceDefaults = @{
-                    "SysMain"          = "Automatic"
-                    "DiagTrack"        = "Automatic"
-                    "dmwappushservice" = "Manual"
-                    "MapsBroker"       = "Automatic"
-                    "Fax"              = "Manual"
-                    "RetailDemo"       = "Manual"
-                    "WpcMonSvc"        = "Manual"
-                    "SharedRealitySvc" = "Manual"
-                    "WerSvc"           = "Manual"
-                    "PcaSvc"           = "Manual"
-                }
-                foreach ($svcName in $serviceDefaults.Keys) {
-                    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
-                    if ($svc) {
-                        Set-Service -Name $svcName -StartupType $serviceDefaults[$svcName] -ErrorAction SilentlyContinue
-                        if ($serviceDefaults[$svcName] -eq "Automatic") {
-                            Start-Service -Name $svcName -ErrorAction SilentlyContinue
-                        }
-                    }
-                }
-            }
-            "RestoreTelemetry" {
-                # Bing & Search
+            "BingSearch" {
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "DisableWebSearch"
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "ConnectedSearchUseWeb"
                 Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled"
+            }
+            "Cortana" {
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana"
-                
-                # Copilot & AI
+            }
+            "Copilot" {
                 Remove-RegValue "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot"
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot"
+            }
+            "Recall" {
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis"
-                
-                # Ads & Content Delivery
+            }
+            "Ads" {
                 $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
                 Remove-RegValue $cdm "ContentDeliveryAllowed"
                 Remove-RegValue $cdm "OemPreInstalledAppsEnabled"
@@ -601,32 +694,60 @@ function Menu-RollbackCenter {
                 Remove-RegValue $cdm "SubscribedContent-338389Enabled"
                 Remove-RegValue $cdm "SubscribedContent-353698Enabled"
                 Remove-RegValue $cdm "SystemPaneSuggestionsEnabled"
-                
-                # Widgets & Activity History
+            }
+            "Widgets" {
                 Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa"
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests"
+            }
+            "ActivityHistory" {
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "EnableActivityFeed"
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities"
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "UploadUserActivities"
+            }
+            "TelemetryDiag" {
                 Remove-RegValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry"
                 Remove-RegValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs"
             }
-            "RestoreLatency" {
-                # Stock Windows priority separation (Hex 2 = decimal 2)
+        }
+    }
+    Write-Host "[+] Privacy and Telemetry settings restored successfully!" -ForegroundColor Green
+    Pause-Console
+}
+
+function Menu-RestoreIndividualLatency {
+    $latencyItems = [System.Collections.Generic.List[PSObject]]@(
+        [PSCustomObject]@{ Id = "Quantum"; Label = "Restore CPU Quantum (Win32PrioritySeparation = 2 [Stock])"; Selected = $true },
+        [PSCustomObject]@{ Id = "GameDVR"; Label = "Re-enable GameDVR & Background Screen Recording"; Selected = $true },
+        [PSCustomObject]@{ Id = "Multimedia"; Label = "Restore SystemResponsiveness (20) & NetworkThrottling (10)"; Selected = $true },
+        [PSCustomObject]@{ Id = "GpuPriority"; Label = "Restore Game Task Profile Priorities to Stock"; Selected = $true },
+        [PSCustomObject]@{ Id = "InstantUI"; Label = "Restore MenuShowDelay (400ms) & HungAppTimeouts (5000ms)"; Selected = $true },
+        [PSCustomObject]@{ Id = "BalancedPower"; Label = "Restore Balanced Power Scheme (Default)"; Selected = $true }
+    )
+
+    $selected = Show-MultiSelectMenu -Title "RESTORE LATENCY & HARDWARE TWEAKS" -Subtitle "Select which specific kernel, power or latency tweak(s) to restore." -Items $latencyItems
+    if ($null -eq $selected) { return }
+
+    Clear-Host
+    Write-Host "[*] Restoring selected hardware and latency settings..." -ForegroundColor Yellow
+    foreach ($item in $selected) {
+        if (-not $item.Selected) { continue }
+        Write-Host " [+] Restoring: $($item.Label)" -ForegroundColor Cyan
+        switch ($item.Id) {
+            "Quantum" {
                 Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" 2
-                
-                # Re-enable GameDVR defaults
+            }
+            "GameDVR" {
                 Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 1
                 Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_Enabled" 1
                 Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_FSEBehaviorMode" 0
                 Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_HonorUserFSEBehaviorMode" 0
                 Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_DXGIHonorFSEWindowsCompatible" 0
-                
-                # Restore Multimedia & Network Throttling defaults
+            }
+            "Multimedia" {
                 Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" 10
                 Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" 20
-                
-                # Restore Game Task Profile defaults
+            }
+            "GpuPriority" {
                 $gameProfile = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
                 Set-RegDWord $gameProfile "Affinity" 0
                 Set-RegString $gameProfile "Background Only" "False"
@@ -635,37 +756,79 @@ function Menu-RollbackCenter {
                 Set-RegDWord $gameProfile "Priority" 2
                 Set-RegString $gameProfile "Scheduling Category" "Medium"
                 Set-RegString $gameProfile "SFIO Priority" "Normal"
-                
-                # Restore UI Delays
+            }
+            "InstantUI" {
                 Set-RegString "HKCU:\Control Panel\Desktop" "MenuShowDelay" "400"
                 Set-RegString "HKCU:\Control Panel\Desktop" "WaitToKillAppTimeout" "5000"
                 Set-RegString "HKCU:\Control Panel\Desktop" "HungAppTimeout" "5000"
-
-                # Restore Balanced Power Plan (381b4222-f694-41f0-9685-ff5bb260df2e)
+            }
+            "BalancedPower" {
                 powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e 2>$null | Out-Null
-            }
-            "RestoreVBS" {
-                bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
-                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity"
-                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled"
-            }
-            "ReinstallStoreApps" {
-                Write-Host " [*] Re-registering all built-in Windows UWP Store apps..." -ForegroundColor Yellow
-                Get-AppxPackage -AllUsers | ForEach-Object {
-                    Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
-                }
-            }
-            "OpenSystemRestore" {
-                Start-Process "rstrui.exe"
             }
         }
     }
-
-    Write-Host ""
-    Write-Host "========================================================================" -ForegroundColor Green
-    Write-Host " [OK] ROLLBACK FINISHED! REBOOT RECOMMENDED TO FULLY RESTORE DEFAULTS." -ForegroundColor Green
-    Write-Host "========================================================================" -ForegroundColor Green
+    Write-Host "[+] Hardware and latency tweaks restored successfully!" -ForegroundColor Green
     Pause-Console
+}
+
+# ==============================================================================
+# 8. RESTORE & ROLLBACK CENTER (UNDO HUB)
+# ==============================================================================
+function Menu-RollbackCenter {
+    do {
+        try { [Console]::CursorVisible = $true } catch {}
+        Clear-Host
+        Write-Host "==========================================================================" -ForegroundColor Red
+        Write-Host "                   RESTORE & ROLLBACK COMMAND CENTER                      " -ForegroundColor Yellow
+        Write-Host "             Created by: blayk11 | https://github.com/blayk11             " -ForegroundColor Cyan
+        Write-Host "==========================================================================" -ForegroundColor Red
+        Write-Host " Select a granular category to restore specific items:" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  [1] Reinstall / Restore Specific Apps (Select item-by-item)" -ForegroundColor Magenta
+        Write-Host "  [2] Restore Specific Background Services (Select item-by-item)" -ForegroundColor Yellow
+        Write-Host "  [3] Restore Specific Telemetry & Privacy Settings (Select item-by-item)" -ForegroundColor Yellow
+        Write-Host "  [4] Restore Specific Latency & Hardware Tweaks (Select item-by-item)" -ForegroundColor Green
+        Write-Host "  [5] Re-enable VBS / Core Isolation & Security Hypervisor" -ForegroundColor Blue
+        Write-Host "  [6] Reinstall / Re-register ALL Built-in Windows Store Apps" -ForegroundColor Cyan
+        Write-Host "  [7] Launch Windows System Restore Wizard (rstrui.exe)" -ForegroundColor White
+        Write-Host "  ------------------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "  [Q] Return to Main Menu" -ForegroundColor DarkYellow
+        Write-Host ""
+        $rbChoice = (Read-Host "Enter your choice").Trim().ToUpper()
+
+        switch ($rbChoice) {
+            "1" { Menu-RestoreIndividualApps }
+            "2" { Menu-RestoreIndividualServices }
+            "3" { Menu-RestoreIndividualPrivacy }
+            "4" { Menu-RestoreIndividualLatency }
+            "5" {
+                Clear-Host
+                Write-Host "[*] Re-enabling VBS & Security Hypervisor..." -ForegroundColor Yellow
+                bcdedit /set hypervisorlaunchtype auto 2>$null | Out-Null
+                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity"
+                Remove-RegValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled"
+                Write-Host "[+] VBS / Hypervisor set to AUTO (default). Reboot required!" -ForegroundColor Green
+                Pause-Console
+            }
+            "6" {
+                Clear-Host
+                Write-Host "[*] Re-registering all built-in Windows Store packages..." -ForegroundColor Yellow
+                Get-AppxPackage -AllUsers | ForEach-Object {
+                    Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
+                }
+                Write-Host "[+] Store app registration finished!" -ForegroundColor Green
+                Pause-Console
+            }
+            "7" {
+                Start-Process "rstrui.exe"
+            }
+            "Q" { break }
+            default {
+                Write-Host "Invalid choice!" -ForegroundColor Red
+                Start-Sleep -Seconds 1
+            }
+        }
+    } while ($rbChoice -ne "Q")
 }
 
 # ==============================================================================

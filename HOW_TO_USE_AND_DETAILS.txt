@@ -98,14 +98,15 @@ Inside any category menu ([2], [3], [4], [5], [7], [8]):
     - How it works: Recursively cleans cache directories and calls Clear-RecycleBin.
 
 [8] Restore & Rollback Center (Undo Hub):
-    - What it does: Allows instant rollback of any tweaked setting back to original Windows defaults.
+    - What it does: Allows item-by-item granular rollback or category-wide restoration.
     - How it works:
-      * Restores services startup configuration (Automatic/Manual).
-      * Removes debloat registry override keys for Telemetry, Copilot, Bing and Ads.
-      * Reverts Win32PrioritySeparation to 2, re-enables GameDVR, and resets power scheme.
-      * Re-enables hypervisor and VBS.
-      * Re-registers stock Windows UWP app packages.
-      * Direct launcher for System Restore GUI (rstrui.exe).
+      * [1] Reinstall / Restore Specific Apps: Selectively reinstall individual apps (Store, Weather, Calculator, Phone Link, Alarms, Media Player, Snipping Tool, etc.) via image manifest or winget.
+      * [2] Restore Specific Services: Select individual services to return to stock (Automatic/Manual).
+      * [3] Restore Privacy & Telemetry: Selectively re-enable Bing Search, Copilot AI, Widgets, or Telemetry.
+      * [4] Restore Latency Tweaks: Selectively revert Win32PrioritySeparation, GameDVR, and Power Plans.
+      * [5] Re-enable VBS & Hypervisor.
+      * [6] Batch re-register all factory Windows Store apps.
+      * [7] Direct shortcut to System Restore GUI (rstrui.exe).
 
 --------------------------------------------------------------------------------
  Credits: Engineered by blayk11 (https://github.com/blayk11)

@@ -120,13 +120,14 @@ Disables Hypervisor-Enforced Code Integrity (HVCI) and Virtualization-Based Secu
 Deep cleanup of system temporary files (`C:\Windows\Temp`), user temp files (`%TEMP%`), Windows Update download cache, Prefetch cache, and Recycle Bin.
 
 ### 8. 🔄 Restore & Rollback Center (Undo Hub)
-Full peace-of-mind rollback engine allowing selective or full restoration:
-* Restores background services to native Windows defaults (`Automatic`/`Manual`).
-* Re-enables Bing search, Copilot AI, Start Menu widgets, and Windows Telemetry policies.
-* Restores stock latency parameters (`Win32PrioritySeparation = 2`, GameDVR, Balanced Power Plan).
-* Re-enables Virtualization-Based Security (VBS) and Windows Hypervisor.
-* Re-registers and restores default Microsoft Store and provisioned UWP packages.
-* Direct shortcut to launch the Windows System Restore Wizard (`rstrui.exe`).
+Full peace-of-mind rollback engine allowing selective, item-by-item or category-wide restoration:
+* **Item-by-Item App Reinstallation**: Reinstall or repair specific UWP/Store apps individually (Weather, News, Calculator, Alarms, Phone Link, Media Player, Snipping Tool, Terminal, Store, etc.) via provisioned image manifest or Microsoft Store (`winget`).
+* **Granular Background Services Restore**: Choose exactly which background services to re-enable and return to Windows defaults (`Automatic`/`Manual`).
+* **Granular Privacy & Telemetry Restore**: Selectively re-enable Bing Search, Copilot AI, Start Menu widgets, or Diagnostic telemetry.
+* **Granular Hardware & Latency Restore**: Revert specific kernel parameters (`Win32PrioritySeparation = 2`), GameDVR background capture, UI delays, or Balanced power plan.
+* **VBS & Hypervisor Restore**: Re-enables Virtualization-Based Security (VBS) and sets Windows Hypervisor back to `auto`.
+* **Full Store Package Re-registration**: One-click repair and re-registration of all factory Windows UWP apps.
+* **System Restore Launcher**: Direct shortcut to launch the Windows System Restore Wizard (`rstrui.exe`).
 
 ---
 
