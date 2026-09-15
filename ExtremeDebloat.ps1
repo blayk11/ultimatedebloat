@@ -32,7 +32,7 @@ function Set-RegDWord {
     param (
         [string]$Path,
         [string]$Name,
-        [int]$Value
+        [object]$Value
     )
     try {
         if (-not (Test-Path $Path)) {
@@ -41,7 +41,45 @@ function Set-RegDWord {
         Set-ItemProperty -Path $Path -Name $Name -Type DWord -Value $Value -Force -ErrorAction Stop | Out-Null
     } catch {
         $regPath = $Path.Replace("HKLM:\", "HKLM\").Replace("HKCU:\", "HKCU\")
-        cmd.exe /c "reg add `"$regPath`" /v `"$Name`" /t REG_DWORD /d $Value /f" 2>$null | Out-Null
+        $valInt = [uint32]$Value
+        cmd.exe /c "reg add `"$regPath`" /v `"$Name`" /t REG_DWORD /d $valInt /f" 2>$null | Out-Null
+    }
+}
+
+function Enable-UltimatePerformanceScheme {
+    $guid = $null
+    # Try finding an existing Ultimate Performance scheme (cross-language regex matching)
+    foreach ($line in (powercfg -list)) {
+        if ($line -match "(Desempenho M.ximo|Ultimate Performance)" -and $line -match "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})") {
+            $guid = $matches[1]
+            break
+        }
+    }
+    # If not found, attempt to duplicate OEM Ultimate Performance template
+    if (-not $guid) {
+        $dup = powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
+        if ($dup -match "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})") {
+            $guid = $matches[1]
+        } else {
+            foreach ($line in (powercfg -list)) {
+                if ($line -match "(Desempenho M.ximo|Ultimate Performance)" -and $line -match "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})") {
+                    $guid = $matches[1]
+                    break
+                }
+            }
+        }
+    }
+    # Fallback to High Performance if Ultimate Performance is unavailable
+    if (-not $guid) {
+        foreach ($line in (powercfg -list)) {
+            if ($line -match "(Alto Desempenho|High performance)" -and $line -match "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})") {
+                $guid = $matches[1]
+                break
+            }
+        }
+    }
+    if ($guid) {
+        powercfg -setactive $guid 2>$null | Out-Null
     }
 }
 
@@ -141,10 +179,14 @@ function Show-MultiSelectMenu {
     $listStartTop = [Console]::CursorTop
 
     while ($true) {
-        $winHeight = [Console]::WindowHeight
-        if ($winHeight -lt 20) { $winHeight = 25 }
-        $winWidth = [Console]::WindowWidth
-        if ($winWidth -lt 80) { $winWidth = 80 }
+        $winHeight = 25
+        $winWidth = 80
+        try {
+            $winHeight = [Console]::WindowHeight
+            if ($winHeight -lt 20) { $winHeight = 25 }
+            $winWidth = [Console]::WindowWidth
+            if ($winWidth -lt 80) { $winWidth = 80 }
+        } catch {}
 
         # Calculate max visible items with safe margin to prevent console buffer scrolling
         $maxVisible = [Math]::Max(6, $winHeight - $listStartTop - 4)
@@ -261,24 +303,38 @@ function Show-MultiSelectMenu {
 function Pause-Console {
     Write-Host ""
     Write-Host "Press any key to return to the menu..." -ForegroundColor DarkGray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    try {
+        $null = [Console]::ReadKey($true)
+    } catch {
+        try {
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        } catch {
+            $null = Read-Host
+        }
+    }
 }
 
 # ==============================================================================
 # 1. SYSTEM RESTORE POINT
 # ==============================================================================
 function Invoke-RestorePoint {
-    Clear-Host
+    param (
+        [switch]$NoPause
+    )
+    if (-not $NoPause) { Clear-Host }
     Write-Host "[*] Creating Safety System Restore Point..." -ForegroundColor Yellow
     try {
+        Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" "SystemRestorePointCreationFrequency" 0
         Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
         Checkpoint-Computer -Description "Pre-Debloat-blayk11" -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
         Write-Host "[+] System restore point created successfully!" -ForegroundColor Green
     }
     catch {
-        Write-Host "[-] Warning: Unable to create restore point ($($_.Exception.Message))" -ForegroundColor Red
+        Write-Host "[-] Notice: Restore point could not be created automatically ($($_.Exception.Message)). Continuing optimizations safely..." -ForegroundColor Yellow
     }
-    Pause-Console
+    if (-not $NoPause) {
+        Pause-Console
+    }
 }
 
 # ==============================================================================
@@ -334,8 +390,11 @@ function Menu-BloatwareApps {
     foreach ($item in $selected) {
         if ($item.Selected) {
             Write-Host " [-] Removing: $($item.Label)" -ForegroundColor Magenta
-            Get-AppxPackage -Name $item.Pattern -AllUsers -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
-            Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $item.Pattern } | ForEach-Object {
+            Get-AppxPackage -Name $item.Pattern -AllUsers -ErrorAction SilentlyContinue | ForEach-Object {
+                Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction SilentlyContinue
+                Remove-AppxPackage -Package $_.PackageFullName -ErrorAction SilentlyContinue
+            }
+            Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like $item.Pattern } | ForEach-Object {
                 Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue | Out-Null
             }
         }
@@ -504,9 +563,7 @@ function Menu-LowLatency {
                 Set-RegString "HKCU:\Control Panel\Desktop" "HungAppTimeout" "1000"
             }
             "UltimatePower" {
-                powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null | Out-Null
-                $scheme = (powercfg -list | Select-String "Desempenho M.ximo|Ultimate Performance" | ForEach-Object { $_.Line.Split()[3] })
-                if ($scheme) { powercfg -setactive $scheme }
+                Enable-UltimatePerformanceScheme
             }
         }
     }
@@ -518,13 +575,18 @@ function Menu-LowLatency {
 # 6. DISABLE VBS / CORE ISOLATION
 # ==============================================================================
 function Invoke-DisableVBS {
-    Clear-Host
+    param (
+        [switch]$NoPause
+    )
+    if (-not $NoPause) { Clear-Host }
     Write-Host "[*] Disabling VBS & Security Hypervisor..." -ForegroundColor Yellow
     bcdedit /set hypervisorlaunchtype off 2>$null | Out-Null
     Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity" 0
     Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" "Enabled" 0
     Write-Host "[+] VBS / Hypervisor disabled successfully!" -ForegroundColor Green
-    Pause-Console
+    if (-not $NoPause) {
+        Pause-Console
+    }
 }
 
 # ==============================================================================
@@ -944,6 +1006,121 @@ function Menu-RollbackCenter {
     } while ($rollbackChoice -ne "Q")
 }
 
+function Invoke-TurboMode {
+    Clear-Host
+    Write-Host "==========================================================================" -ForegroundColor Red
+    Write-Host "             APPLYING FULL TURBO MODE (ALL RECOMMENDED TWEAKS)            " -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Red
+    Write-Host ""
+
+    # 1. Restore Point (Graceful, non-blocking)
+    Invoke-RestorePoint -NoPause
+
+    # 2. Bloatware & UWP Apps Purge
+    Write-Host "`n[*] [1/5] Purging UWP Bloatware & Sponsored Apps..." -ForegroundColor Yellow
+    $bloatPattern = "BingWeather|BingNews|BingFinance|BingSports|GetHelp|Getstarted|Microsoft3DViewer|MicrosoftOfficeHub|MicrosoftSolitaireCollection|MixedReality|People|SkypeApp|Todos|FeedbackHub|WindowsMaps|YourPhone|ZuneMusic|ZuneVideo|Clipchamp|PowerAutomate|Copilot|549981C3F5F10|Spotify|Disney|TikTok|Facebook|Instagram|CandyCrush|PrimeVideo|Netflix|OutlookForWindows"
+    
+    Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue | Where-Object { 
+        $_.Name -match $bloatPattern 
+    } | ForEach-Object {
+        Write-Host " [-] Removing: $($_.Name)" -ForegroundColor Magenta
+        Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction SilentlyContinue
+        Remove-AppxPackage -Package $_.PackageFullName -ErrorAction SilentlyContinue
+    }
+
+    Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { 
+        $_.DisplayName -match $bloatPattern 
+    } | ForEach-Object {
+        Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue | Out-Null
+    }
+    Write-Host "[+] Bloatware apps purged successfully!" -ForegroundColor Green
+
+    # 3. Telemetry, Copilot AI & Ads
+    Write-Host "`n[*] [2/5] Stripping Telemetry, Windows Copilot AI & System Ads..." -ForegroundColor Yellow
+    # Start Menu & Bing
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "DisableWebSearch" 1
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "ConnectedSearchUseWeb" 0
+    Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana" 0
+    # Copilot & AI Recall
+    Set-RegDWord "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis" 1
+    # Ads & Content Delivery
+    $cdm = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
+    Set-RegDWord $cdm "ContentDeliveryAllowed" 0
+    Set-RegDWord $cdm "OemPreInstalledAppsEnabled" 0
+    Set-RegDWord $cdm "PreInstalledAppsEnabled" 0
+    Set-RegDWord $cdm "PreInstalledAppsEverEnabled" 0
+    Set-RegDWord $cdm "SilentInstalledAppsEnabled" 0
+    Set-RegDWord $cdm "SubscribedContent-338387Enabled" 0
+    Set-RegDWord $cdm "SubscribedContent-338388Enabled" 0
+    Set-RegDWord $cdm "SubscribedContent-338389Enabled" 0
+    Set-RegDWord $cdm "SubscribedContent-353698Enabled" 0
+    Set-RegDWord $cdm "SystemPaneSuggestionsEnabled" 0
+    # Widgets & Activity History
+    Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "EnableActivityFeed" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "UploadUserActivities" 0
+    Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
+    Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
+    Write-Host "[+] Telemetry, AI and Ads stripped successfully!" -ForegroundColor Green
+
+    # 4. Background Services Optimization
+    Write-Host "`n[*] [3/5] Disabling Redundant Background Services..." -ForegroundColor Yellow
+    @("SysMain", "DiagTrack", "dmwappushservice", "MapsBroker", "Fax", "RetailDemo", "WpcMonSvc", "SharedRealitySvc", "WerSvc", "PcaSvc") | ForEach-Object {
+        $svcName = $_
+        $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
+        if ($svc) {
+            Write-Host " [-] Stopping & Disabling: $svcName" -ForegroundColor DarkGray
+            Stop-Service -Name $svcName -Force -ErrorAction SilentlyContinue
+            Set-Service -Name $svcName -StartupType Disabled -ErrorAction SilentlyContinue
+        }
+    }
+    Write-Host "[+] Background services optimized successfully!" -ForegroundColor Green
+
+    # 5. Low Latency & Hardware Scheduling
+    Write-Host "`n[*] [4/5] Applying Low-Latency Kernel & Scheduling Tweaks..." -ForegroundColor Yellow
+    Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" 38
+    Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 0
+    Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_Enabled" 0
+    Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_FSEBehaviorMode" 2
+    Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_HonorUserFSEBehaviorMode" 1
+    Set-RegDWord "HKCU:\System\GameConfigStore" "GameDVR_DXGIHonorFSEWindowsCompatible" 1
+    Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" 0xFFFFFFFF
+    Set-RegDWord "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" 0
+
+    $gameProfile = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
+    Set-RegDWord $gameProfile "Affinity" 0
+    Set-RegString $gameProfile "Background Only" "False"
+    Set-RegDWord $gameProfile "Clock Rate" 10000
+    Set-RegDWord $gameProfile "GPU Priority" 8
+    Set-RegDWord $gameProfile "Priority" 6
+    Set-RegString $gameProfile "Scheduling Category" "High"
+    Set-RegString $gameProfile "SFIO Priority" "High"
+
+    Set-RegString "HKCU:\Control Panel\Desktop" "MenuShowDelay" "0"
+    Set-RegString "HKCU:\Control Panel\Desktop" "WaitToKillAppTimeout" "2000"
+    Set-RegString "HKCU:\Control Panel\Desktop" "HungAppTimeout" "1000"
+
+    Enable-UltimatePerformanceScheme
+    Write-Host "[+] Low-latency tweaks and Ultimate Performance power scheme activated!" -ForegroundColor Green
+
+    # 6. Disable VBS & Security Hypervisor
+    Write-Host "`n[*] [5/5] Disabling VBS & Security Hypervisor for Max FPS..." -ForegroundColor Yellow
+    Invoke-DisableVBS -NoPause
+    Write-Host "[+] VBS / Core Isolation disabled!" -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "==========================================================================" -ForegroundColor Green
+    Write-Host "  [OK] FULL TURBO OPTIMIZATION COMPLETED SUCCESSFULLY!                    " -ForegroundColor Green
+    Write-Host "  Please restart your computer to apply all kernel and scheduling changes." -ForegroundColor Yellow
+    Write-Host "==========================================================================" -ForegroundColor Green
+    Pause-Console
+}
+
 # ==============================================================================
 # INTERACTIVE MAIN MENU
 # ==============================================================================
@@ -980,49 +1157,7 @@ do {
         "6" { Invoke-DisableVBS }
         "7" { Menu-DeepCleaning }
         "8" { Menu-RollbackCenter }
-        "A" {
-            Invoke-RestorePoint
-            Clear-Host
-            Write-Host "[*] Applying FULL TURBO MODE..." -ForegroundColor Yellow
-            
-            # Apps
-            Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue | Where-Object { 
-                $_.Name -match "(BingWeather|BingNews|BingFinance|BingSports|GetHelp|Getstarted|Microsoft3DViewer|MicrosoftOfficeHub|MicrosoftSolitaireCollection|MixedReality|People|SkypeApp|Todos|FeedbackHub|WindowsMaps|YourPhone|ZuneMusic|ZuneVideo|Clipchamp|PowerAutomate|Copilot|549981C3F5F10|Spotify|Disney|TikTok|Facebook|Instagram|CandyCrush|PrimeVideo|Netflix|OutlookForWindows)"
-            } | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
-
-            # Telemetry & Privacy
-            Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "DisableWebSearch" 1
-            Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "ConnectedSearchUseWeb" 0
-            Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
-            Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana" 0
-            Set-RegDWord "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
-            Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot" "TurnOffWindowsCopilot" 1
-            Set-RegDWord "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" "DisableAIDataAnalysis" 1
-
-            # Services
-            @("SysMain", "DiagTrack", "dmwappushservice", "MapsBroker", "Fax", "RetailDemo", "WpcMonSvc", "SharedRealitySvc", "WerSvc", "PcaSvc") | ForEach-Object {
-                Stop-Service -Name $_ -Force -ErrorAction SilentlyContinue
-                Set-Service -Name $_ -StartupType Disabled -ErrorAction SilentlyContinue
-            }
-
-            # Latency
-            Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" "Win32PrioritySeparation" 38
-            Set-RegDWord "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 0
-            Set-RegString "HKCU:\Control Panel\Desktop" "MenuShowDelay" "0"
-            powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null | Out-Null
-            $scheme = (powercfg -list | Select-String "Desempenho M.ximo|Ultimate Performance" | ForEach-Object { $_.Line.Split()[3] })
-            if ($scheme) { powercfg -setactive $scheme }
-
-            # VBS
-            bcdedit /set hypervisorlaunchtype off 2>$null | Out-Null
-            Set-RegDWord "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity" 0
-
-            Write-Host ""
-            Write-Host "========================================================================" -ForegroundColor Green
-            Write-Host " [OK] TURBO OPTIMIZATION COMPLETED! REBOOT YOUR PC TO APPLY ALL CHANGES." -ForegroundColor Green
-            Write-Host "========================================================================" -ForegroundColor Green
-            Pause-Console
-        }
+        "A" { Invoke-TurboMode }
         "R" { Restart-Computer -Force }
         "Q" { break }
         default {
